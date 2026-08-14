@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Worker Dashboard — CaptchaSolve</title>
+<style>
+:root{--bg:#0f172a;--surface:#1e293b;--surface2:#253047;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--accent:#38bdf8;--green:#4ade80;--orange:#fb923c;--red:#f87171;--yellow:#facc15;--purple:#a78bfa}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:.875rem 1.5rem;display:flex;align-items:center;gap:1rem}
+header h1{font-size:1.2rem;font-weight:700;color:var(--accent)}
+#status-dot{width:9px;height:9px;border-radius:50%;background:var(--muted);margin-left:auto;transition:.3s}
+#status-dot.online{background:var(--green);box-shadow:0 0 6px var(--green)}
+#status-text{font-size:.8rem;color:var(--muted)}
+#logout-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:.3rem .7rem;border-radius:6px;cursor:pointer;font-size:.8rem;transition:.15s;display:none}
+#logout-btn:hover{color:var(--red);border-color:var(--red)}
+.layout{display:flex;flex:1;gap:0}
+aside{width:220px;background:var(--surface);border-right:1px solid var(--border);padding:1.25rem 1rem;flex-shrink:0}
+.stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.75rem;margin-bottom:.75rem;text-align:center}
+.stat-card .val{font-size:1.6rem;font-weight:800;color:var(--accent)}
+.stat-card .lbl{font-size:.75rem;color:var(--muted);margin-top:.1rem}
+.stat-card.green .val{color:var(--green)}
+.stat-card.orange .val{color:var(--orange)}
+.aside-links{margin-top:1rem;display:flex;flex-direction:column;gap:.35rem}
+.aside-links a{font-size:.78rem;color:var(--muted);text-decoration:none;padding:.3rem .5rem;border-radius:5px;transition:.15s}
+.aside-links a:hover{color:var(--text);background:var(--surface2)}
+main{flex:1;padding:1.5rem;display:flex;flex-direction:column;gap:1rem;overflow-y:auto}
+#auth-panel{max-width:400px;margin:2rem auto;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2rem}
+#auth-panel h2{font-size:1.2rem;font-weight:700;margin-bottom:1.25rem;text-align:center}
+.tabs{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:1.25rem}
+.tab{flex:1;padding:.5rem;text-align:center;cursor:pointer;font-size:.875rem;color:var(--muted);transition:.15s}
+.tab.active{background:var(--accent);color:#0f172a;font-weight:700}
+.form-group{margin-bottom:.875rem}
+.form-group label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:.35rem}
+.form-group input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:.55rem .75rem;color:var(--text);font-size:.9rem;outline:none;transition:.15s}
+.form-group input:focus{border-color:var(--accent)}
+.btn{width:100%;padding:.65rem;border:none;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;transition:.15s}
+.btn-primary{background:var(--accent);color:#0f172a}
+.btn-primary:hover{opacity:.85}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.error{background:#450a0a;border:1px solid var(--red);color:var(--red);padding:.5rem .75rem;border-radius:6px;font-size:.85rem;margin-bottom:.75rem;display:none}
+#task-panel{display:none;flex-direction:column;gap:1rem;max-width:740px;margin:0 auto;width:100%}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem}
+.panel h3{font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--muted)}
+#task-type-badge{display:inline-block;padding:.2rem .6rem;border-radius:99px;font-size:.75rem;font-weight:700;margin-bottom:.75rem}
+#task-type-badge.image{background:#1a3a5f;color:var(--accent)}
+#task-type-badge.recaptcha{background:#2a1f3a;color:var(--purple)}
+#task-type-badge.hcaptcha{background:#1a2f1a;color:var(--green)}
+#task-type-badge.turnstile{background:#3a2a0a;color:var(--yellow)}
+#task-type-badge.audio{background:#2a0a2a;color:#f0abfc}
+
+/* ── Image ── */
+#img-container{text-align:center;margin:1rem 0}
+#captcha-img{max-width:100%;max-height:200px;border-radius:8px;border:2px solid var(--border);background:#fff}
+
+/* ── Audio ── */
+#audio-container{display:none;margin:.75rem 0}
+.audio-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1.25rem;text-align:center}
+.audio-card .audio-icon{font-size:2.5rem;margin-bottom:.5rem}
+.audio-card p{font-size:.85rem;color:var(--muted);margin-bottom:.75rem}
+#audio-player{width:100%;border-radius:6px;margin-bottom:.5rem}
+.audio-tip{font-size:.75rem;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:.5rem .75rem;margin-top:.5rem;text-align:left}
+
+/* ── Token (reCAPTCHA / hCaptcha) ── */
+#token-task{display:none}
+.url-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
+.url-box{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:.5rem .75rem;font-family:monospace;font-size:.78rem;color:var(--accent);word-break:break-all}
+.open-btn{flex-shrink:0;background:var(--accent);color:#0f172a;border:none;border-radius:6px;padding:.5rem .85rem;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:.15s}
+.open-btn:hover{opacity:.85}
+.step-hint{font-size:.82rem;color:var(--muted);margin-bottom:.4rem;line-height:1.5}
+
+/* ── Iframe for same-origin captcha ── */
+#iframe-container{display:none;border:2px solid var(--accent);border-radius:8px;overflow:hidden;margin:.75rem 0}
+#captcha-iframe{width:100%;height:420px;border:none;background:#fff}
+.iframe-hint{font-size:.75rem;color:var(--accent);padding:.4rem .75rem;background:var(--accent-lo,#001e2e);text-align:center}
+
+/* ── Input ── */
+#answer-input{width:100%;background:var(--surface2);border:2px solid var(--border);border-radius:8px;padding:.75rem;color:var(--text);font-size:1rem;outline:none;font-family:monospace;resize:vertical;min-height:54px;transition:.15s}
+#answer-input:focus{border-color:var(--accent)}
+.token-auto-badge{display:none;font-size:.72rem;color:var(--green);background:#022c1e;border:1px solid var(--green);border-radius:4px;padding:.15rem .4rem;margin-bottom:.4rem}
+.task-actions{display:flex;gap:.75rem;margin-top:.75rem}
+.task-actions button{flex:1;padding:.7rem;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;border:none;transition:.15s}
+#submit-btn{background:var(--green);color:#0f172a}
+#submit-btn:hover{opacity:.85}
+#skip-btn{background:var(--surface2);color:var(--red);border:1px solid var(--border)}
+#skip-btn:hover{border-color:var(--red)}
+
+/* ── Idle ── */
+#idle-panel{text-align:center;padding:3rem 1rem;display:none}
+#idle-panel .idle-icon{font-size:3rem;margin-bottom:1rem}
+#idle-panel p{color:var(--muted);margin-bottom:1rem}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--green);color:#0f172a;padding:.6rem 1rem;border-radius:8px;font-size:.85rem;font-weight:700;transform:translateY(100px);opacity:0;transition:.3s;z-index:999}
+#toast.show{transform:translateY(0);opacity:1}
+
+/* ── Log ── */
+#log{max-height:160px;overflow-y:auto;display:flex;flex-direction:column-reverse;gap:.25rem}
+.log-entry{font-size:.78rem;color:var(--muted);padding:.2rem .4rem;border-radius:4px}
+.log-entry.good{color:var(--green)}
+.log-entry.bad{color:var(--red)}
+.log-entry.info{color:var(--accent)}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚡ Worker Dashboard</h1>
+  <span id="status-text">Not connected</span>
+  <div id="status-dot"></div>
+  <button id="logout-btn" onclick="logout()">Logout</button>
+</header>
+
+<div class="layout">
+  <aside id="sidebar" style="display:none">
+    <div class="stat-card green">
+      <div class="val" id="stat-solved">0</div>
+      <div class="lbl">Tasks Solved</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="val" id="stat-balance">$0.000</div>
+      <div class="lbl">Balance Earned</div>
+    </div>
+    <div class="stat-card">
+      <div class="val" id="stat-session">0</div>
+      <div class="lbl">This Session</div>
+    </div>
+    <div class="aside-links">
+      <a href="/test" target="_blank">🧪 Test Page</a>
+      <a href="/admin" target="_blank">⚙️ Admin Panel</a>
+      <a href="/guide" target="_blank">📖 Guide</a>
+    </div>
+  </aside>
+
+  <main>
+    <!-- Auth Panel -->
+    <div id="auth-panel">
+      <h2>🔐 Worker Login</h2>
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('login')">Login</div>
+        <div class="tab" onclick="switchTab('register')">Register</div>
+      </div>
+      <div class="error" id="auth-error"></div>
+      <div class="form-group">
+        <label>Username</label>
+        <input id="username" type="text" placeholder="your_username" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" onclick="submitAuth()">Continue →</button>
+      <p style="font-size:.78rem;color:var(--muted);text-align:center;margin-top:.75rem">Earn $0.001 per solved CAPTCHA</p>
+    </div>
+
+    <!-- Task Panel -->
+    <div id="task-panel">
+      <div class="panel" id="solve-panel" style="display:none">
+        <h3>🧩 Solve this CAPTCHA</h3>
+        <span id="task-type-badge"></span>
+
+        <!-- 1. Image CAPTCHA -->
+        <div id="img-container" style="display:none">
+          <img id="captcha-img" src="" alt="CAPTCHA">
+        </div>
+        <div id="img-hint" style="font-size:.82rem;color:var(--muted);margin:.5rem 0;display:none">
+          Type the text you see in the image:
+        </div>
+
+        <!-- 2. Audio / Voice CAPTCHA -->
+        <div id="audio-container">
+          <div class="audio-card">
+            <div class="audio-icon">🔊</div>
+            <p>Listen carefully and type every word/digit you hear:</p>
+            <audio id="audio-player" controls controlsList="nodownload">
+              Your browser does not support audio.
+            </audio>
+            <div class="audio-tip">
+              💡 reCAPTCHA audio usually says digits like "3 7 1 9 4" — type them without spaces: <strong>37194</strong><br>
+              Play it multiple times if needed. Click "Can't Solve" if audio is unclear.
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Token CAPTCHA (reCAPTCHA / hCaptcha / Turnstile) -->
+        <div id="token-task">
+
+          <!-- Same-origin: show embedded iframe (our test page) -->
+          <div id="iframe-container">
+            <div class="iframe-hint">✨ Solve the CAPTCHA below — token will be captured automatically</div>
+            <iframe id="captcha-iframe" src="" allow="same-origin"></iframe>
+          </div>
+
+          <!-- External site: open in new tab + bookmarklet -->
+          <div id="external-task">
+            <p class="step-hint"><strong>Step 1</strong> — Open the target page and solve the CAPTCHA there:</p>
+            <div class="url-row">
+              <div class="url-box" id="page-url-box"></div>
+              <button class="open-btn" onclick="openPage()">Open ↗</button>
+            </div>
+
+            <!-- Bookmarklet -->
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.875rem;margin:.6rem 0">
+              <p class="step-hint" style="margin-bottom:.6rem">
+                <strong>Step 2</strong> — After solving, click your bookmarklet on that page. Token is sent automatically — no copy/paste!
+              </p>
+              <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
+                <a id="bookmarklet-link" href="#" onclick="return false"
+                   style="display:inline-flex;align-items:center;gap:.35rem;background:var(--accent);color:#0f172a;font-weight:800;font-size:.82rem;padding:.5rem 1rem;border-radius:7px;text-decoration:none;cursor:grab;user-select:none;white-space:nowrap">
+                  🔖 CaptchaSolve
+                </a>
+                <span style="font-size:.75rem;color:var(--muted)">← Drag this to your bookmarks bar (one-time setup)</span>
+              </div>
+              <p style="font-size:.72rem;color:var(--muted);margin-top:.45rem;line-height:1.5">
+                Then on the target page: solve CAPTCHA → click 🔖 CaptchaSolve in your bar → done ✓<br>
+                <em>No bookmarks bar? Use the fallback paste below.</em>
+              </p>
+            </div>
+
+            <p class="step-hint"><strong>Fallback</strong> — Or paste token manually:</p>
+          </div>
+        </div>
+
+        <!-- Auto-captured badge -->
+        <div class="token-auto-badge" id="auto-badge">✓ Token auto-captured from page</div>
+
+        <textarea id="answer-input" placeholder="Enter the answer here…" rows="2"></textarea>
+        <div class="task-actions">
+          <button id="submit-btn" onclick="submitSolution()">✓ Submit Answer</button>
+          <button id="skip-btn" onclick="skipTask()">✕ Can't Solve</button>
+        </div>
+      </div>
+
+      <!-- Idle -->
+      <div id="idle-panel">
+        <div class="idle-icon">⏳</div>
+        <p>No tasks right now. Waiting for new CAPTCHAs…</p>
+        <button class="btn btn-secondary" style="max-width:200px;margin:0 auto" onclick="requestTask()">Check Now</button>
+      </div>
+
+      <!-- Activity Log -->
+      <div class="panel">
+        <h3>📋 Activity Log</h3>
+        <div id="log"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+let socket, worker = null, currentTask = null, sessionSolved = 0, activeTab = 'login';
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0) === (tab==='login')));
+}
+
+async function submitAuth() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  document.getElementById('auth-error').style.display = 'none';
+  if (!username || !password) { showErr('Fill in all fields'); return; }
+  const endpoint = activeTab === 'login' ? '/worker-api/login' : '/worker-api/register';
+  try {
+    const res  = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username,password}) });
+    const data = await res.json();
+    if (data.error) { showErr(data.error); return; }
+    worker = data.worker;
+    localStorage.setItem('captcha_worker', JSON.stringify(worker));
+    startWorker();
+  } catch(e) { showErr('Server error — is the server running?'); }
+}
+
+function showErr(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+function logout() {
+  if (socket) socket.disconnect();
+  worker = currentTask = null; sessionSolved = 0;
+  localStorage.removeItem('captcha_worker');
+  document.getElementById('auth-panel').style.display = 'block';
+  document.getElementById('task-panel').style.display  = 'none';
+  document.getElementById('sidebar').style.display     = 'none';
+  document.getElementById('logout-btn').style.display  = 'none';
+  document.getElementById('status-dot').className = '';
+  document.getElementById('status-text').textContent = 'Not connected';
+  document.getElementById('log').innerHTML = '';
+}
+
+// ── Worker Session ────────────────────────────────────────────────────────────
+function startWorker() {
+  document.getElementById('auth-panel').style.display = 'none';
+  document.getElementById('task-panel').style.display = 'flex';
+  document.getElementById('sidebar').style.display    = 'block';
+  document.getElementById('logout-btn').style.display = 'inline-block';
+  updateStats();
+  buildBookmarklet();
+  connectSocket();
+
+  // Listen for token from iframe (same-origin test page)
+  window.addEventListener('message', (e) => {
+    if (e.origin !== window.location.origin) return;
+    if (e.data && e.data.type === 'captcha_token') {
+      const input = document.getElementById('answer-input');
+      input.value = e.data.token;
+      document.getElementById('auto-badge').style.display = 'inline-block';
+      addLog('Token auto-captured from page ✓', 'good');
+      toast('Token captured! Click Submit ✓');
+    }
+  });
+}
+
+function updateStats() {
+  if (!worker) return;
+  document.getElementById('stat-solved').textContent  = worker.solved_count;
+  document.getElementById('stat-balance').textContent = '$' + parseFloat(worker.balance).toFixed(3);
+  document.getElementById('stat-session').textContent = sessionSolved;
+}
+
+function connectSocket() {
+  socket = io();
+
+  socket.on('connect', () => {
+    document.getElementById('status-dot').className    = 'online';
+    document.getElementById('status-text').textContent = 'Connected — ready';
+    socket.emit('worker:join', { workerId: worker.id, username: worker.username });
+    addLog('Connected to server', 'good');
+  });
+
+  socket.on('disconnect', () => {
+    document.getElementById('status-dot').className    = '';
+    document.getElementById('status-text').textContent = 'Disconnected';
+    addLog('Disconnected', 'bad');
+  });
+
+  socket.on('worker:task', (task) => {
+    currentTask = task;
+    showTask(task);
+    document.getElementById('status-text').textContent = 'Solving…';
+  });
+
+  socket.on('worker:idle', () => {
+    currentTask = null;
+    showIdle();
+    document.getElementById('status-text').textContent = 'Waiting for tasks…';
+  });
+
+  socket.on('worker:credited', ({ balance, solved }) => {
+    worker.balance = balance; worker.solved_count = solved;
+    sessionSolved++;
+    updateStats();
+    toast('+$0.001 earned! 🎉');
+    addLog(`Solved ✓ — balance: $${parseFloat(balance).toFixed(3)}`, 'good');
+  });
+
+  socket.on('worker:error', (msg) => addLog('Error: ' + msg, 'bad'));
+}
+
+// ── Task Rendering ────────────────────────────────────────────────────────────
+function showTask(task) {
+  document.getElementById('solve-panel').style.display = 'block';
+  document.getElementById('idle-panel').style.display  = 'none';
+  document.getElementById('answer-input').value = '';
+  document.getElementById('auto-badge').style.display  = 'none';
+
+  const badge = document.getElementById('task-type-badge');
+  badge.textContent = task.type.toUpperCase();
+  badge.className   = 'task-type-badge ' + task.type;
+
+  const imgC    = document.getElementById('img-container');
+  const audioC  = document.getElementById('audio-container');
+  const tokenC  = document.getElementById('token-task');
+  const imgHint = document.getElementById('img-hint');
+  const iframeC = document.getElementById('iframe-container');
+  const extC    = document.getElementById('external-task');
+  const inp     = document.getElementById('answer-input');
+
+  // Hide all sections first
+  imgC.style.display   = 'none';
+  audioC.style.display = 'none';
+  tokenC.style.display = 'none';
+  imgHint.style.display= 'none';
+  iframeC.style.display= 'none';
+  extC.style.display   = 'none';
+
+  if (task.type === 'image') {
+    // ── Image CAPTCHA ──
+    imgC.style.display    = 'block';
+    imgHint.style.display = 'block';
+    document.getElementById('captcha-img').src = 'data:image/png;base64,' + task.data.image;
+    inp.placeholder = 'Type the text from the image…';
+    inp.rows = 2;
+    inp.focus();
+
+  } else if (task.type === 'audio') {
+    // ── Audio / Voice CAPTCHA ──
+    audioC.style.display = 'block';
+    const audioEl = document.getElementById('audio-player');
+    if (task.data.audioUrl) {
+      audioEl.src = task.data.audioUrl;
+    } else if (task.data.audioData) {
+      audioEl.src = 'data:audio/mp3;base64,' + task.data.audioData;
+    }
+    audioEl.load();
+    inp.placeholder = 'Type what you hear, e.g. 37194';
+    inp.rows = 1;
+    inp.focus();
+
+  } else {
+    // ── Token CAPTCHA (reCAPTCHA / hCaptcha / Turnstile) ──
+    tokenC.style.display = 'block';
+    inp.placeholder = 'Paste the token here…';
+    inp.rows = 3;
+
+    const pageUrl = task.data.pageUrl || '';
+    const siteKey = task.data.siteKey || '';
+
+    // Check if it's our own test page (same origin) → use iframe
+    const isSameOrigin = pageUrl.includes(window.location.hostname) ||
+                         pageUrl.includes('localhost');
+
+    if (isSameOrigin) {
+      iframeC.style.display = 'block';
+      document.getElementById('captcha-iframe').src = pageUrl;
+    } else {
+      extC.style.display = 'block';
+      document.getElementById('page-url-box').textContent = pageUrl;
+    }
+  }
+
+  addLog(`New task: ${task.type} — ID ${task.id.substring(0,12)}`, 'info');
+}
+
+function openPage() {
+  if (!currentTask) return;
+  window.open(currentTask.data.pageUrl, '_blank');
+}
+
+function showIdle() {
+  document.getElementById('solve-panel').style.display = 'none';
+  document.getElementById('idle-panel').style.display  = 'block';
+}
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+function submitSolution() {
+  const answer = document.getElementById('answer-input').value.trim();
+  if (!answer) { alert('Please enter the answer first.'); return; }
+  if (!currentTask || !socket) return;
+  socket.emit('worker:solution', { taskId: currentTask.id, solution: answer });
+  currentTask = null;
+  document.getElementById('solve-panel').style.display = 'none';
+  document.getElementById('captcha-iframe').src = '';
+}
+
+function skipTask() {
+  if (!currentTask || !socket) return;
+  socket.emit('worker:skip', { taskId: currentTask.id });
+  addLog(`Skipped task`, 'bad');
+  currentTask = null;
+  document.getElementById('solve-panel').style.display = 'none';
+  document.getElementById('captcha-iframe').src = '';
+}
+
+function requestTask() {
+  if (socket) socket.emit('worker:ready');
+}
+
+// ── Bookmarklet ───────────────────────────────────────────────────────────────
+function buildBookmarklet() {
+  if (!worker) return;
+  const wid  = worker.id;
+  const host = window.location.origin; // e.g. http://localhost:3000
+
+  // Minified bookmarklet code — grabs token from any reCAPTCHA/hCaptcha page
+  // and POSTs it to our server with the worker ID
+  const code = `(function(){
+var t=(typeof grecaptcha!=='undefined'&&grecaptcha.getResponse&&grecaptcha.getResponse())||
+      (typeof hcaptcha!=='undefined'&&hcaptcha.getResponse&&hcaptcha.getResponse())||
+      (typeof turnstile!=='undefined'&&turnstile.getResponse&&turnstile.getResponse())||'';
+if(!t){alert('No CAPTCHA solved yet on this page!\\nSolve the CAPTCHA first, then click this.');return;}
+var d=document.createElement('div');
+d.style='position:fixed;top:12px;right:12px;z-index:2147483647;background:#1e293b;color:#f1f5f9;font-family:sans-serif;font-size:13px;padding:12px 16px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.5);border:1px solid #334155;min-width:200px';
+d.innerHTML='<strong style="color:#38bdf8">⚡ CaptchaSolve</strong><br><span style="color:#94a3b8">Sending token…</span>';
+document.body.appendChild(d);
+fetch('${host}/worker-api/relay-token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workerId:${wid},token:t})})
+.then(function(r){return r.json();})
+.then(function(j){d.innerHTML=j.ok?'<strong style="color:#4ade80">✓ Token Sent!</strong><br><span style="color:#94a3b8">Check your dashboard</span>':'<strong style="color:#f87171">✕ Error</strong><br><span style="color:#94a3b8">'+(j.error||'Unknown')+'</span>';setTimeout(function(){d.remove();},3000);})
+.catch(function(){d.innerHTML='<strong style="color:#f87171">✕ Server unreachable</strong><br><span style="color:#94a3b8">Is CaptchaSolve running?</span>';setTimeout(function(){d.remove();},3000);});
+})();`;
+
+  const href = 'javascript:' + encodeURIComponent(code);
+  const link = document.getElementById('bookmarklet-link');
+  if (link) link.href = href;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function addLog(msg, cls='') {
+  const el = document.createElement('div');
+  el.className = 'log-entry ' + cls;
+  el.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  document.getElementById('log').prepend(el);
+  if (document.getElementById('log').children.length > 80)
+    document.getElementById('log').lastChild.remove();
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+document.getElementById('answer-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitSolution(); }
+});
+
+// Auto-login
+const saved = localStorage.getItem('captcha_worker');
+if (saved) { try { worker = JSON.parse(saved); startWorker(); } catch(e) { localStorage.removeItem('captcha_worker'); } }
+</script>
+</body>
+</html>

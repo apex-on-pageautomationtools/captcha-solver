@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CaptchaSolve — Live Test Page</title>
+<style>
+:root{--bg:#0f172a;--surface:#1e293b;--surface2:#253047;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--accent:#38bdf8;--green:#4ade80;--orange:#fb923c;--red:#f87171;--yellow:#facc15}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:.875rem 1.5rem;display:flex;align-items:center;gap:1rem}
+header h1{font-size:1.2rem;font-weight:700;color:var(--accent)}
+nav a{color:var(--muted);text-decoration:none;padding:.3rem .7rem;border-radius:6px;font-size:.82rem;border:1px solid var(--border)}
+nav a:hover{color:var(--text);border-color:var(--accent)}
+.page{max-width:820px;margin:0 auto;padding:2rem 1.5rem}
+h2{font-size:1.5rem;font-weight:800;margin-bottom:.4rem}
+.sub{color:var(--muted);font-size:.95rem;margin-bottom:2rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+.card h3{font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--accent)}
+.step-row{display:flex;gap:.75rem;align-items:flex-start;margin-bottom:.875rem}
+.step-num{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#0f172a;font-size:.8rem;font-weight:800;display:flex;align-items:center;justify-content:center}
+.step-body{flex:1;font-size:.9rem;line-height:1.55;color:var(--muted)}
+.step-body strong{color:var(--text)}
+.step-body code{background:var(--surface2);padding:.1rem .35rem;border-radius:3px;font-family:monospace;font-size:.82rem;color:var(--accent)}
+/* ── CAPTCHA container ── */
+.captcha-box{background:var(--surface2);border:2px solid var(--border);border-radius:10px;padding:1.25rem;text-align:center;margin:1rem 0;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.75rem}
+.g-recaptcha{display:inline-block}
+/* ── Submit form ── */
+.form-row{display:flex;gap:.75rem;margin-top:1rem}
+.form-row input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:.55rem .75rem;color:var(--text);font-size:.875rem;outline:none}
+.form-row input:focus{border-color:var(--accent)}
+.btn{padding:.6rem 1.25rem;border:none;border-radius:8px;font-size:.875rem;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn-green{background:var(--green);color:#0f172a}
+.btn-green:hover{opacity:.85}
+.btn-blue{background:var(--accent);color:#0f172a}
+.btn-blue:hover{opacity:.85}
+/* ── Token display ── */
+#token-area{display:none;margin-top:1rem}
+.token-card{background:#022c1e;border:1px solid var(--green);border-radius:8px;padding:1rem}
+.token-card .token-label{font-size:.78rem;color:var(--green);font-weight:700;margin-bottom:.4rem}
+.token-value{font-family:monospace;font-size:.72rem;color:#86efac;word-break:break-all;line-height:1.5}
+.copy-row{display:flex;gap:.5rem;margin-top:.5rem}
+.copy-btn{background:none;border:1px solid var(--green);color:var(--green);padding:.3rem .65rem;border-radius:5px;cursor:pointer;font-size:.78rem}
+.copy-btn:hover{background:var(--green);color:#0f172a}
+/* ── API test ── */
+#api-result{margin-top:.875rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.75rem;font-family:monospace;font-size:.8rem;color:var(--muted);display:none;white-space:pre-wrap;word-break:break-all}
+.label-tag{display:inline-block;font-size:.72rem;font-weight:700;padding:.1rem .45rem;border-radius:3px;margin-right:.25rem}
+.label-ok{background:#022c1e;color:var(--green)}
+.label-err{background:#3a0a0a;color:var(--red)}
+.label-wait{background:#1a2a3a;color:var(--accent)}
+/* ── Status bar ── */
+#solve-status{display:none;align-items:center;gap:.5rem;padding:.6rem .875rem;border-radius:8px;font-size:.85rem;font-weight:600;margin-top:.75rem}
+#solve-status.ok{background:#022c1e;border:1px solid var(--green);color:var(--green);display:flex}
+#solve-status.wait{background:#0a1a2a;border:1px solid var(--accent);color:var(--accent);display:flex}
+#solve-status.err{background:#2a0a0a;border:1px solid var(--red);color:var(--red);display:flex}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* ── Key info box ── */
+.info-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.875rem;margin-top:.875rem}
+.info-box .row{display:flex;gap:.5rem;align-items:center;margin-bottom:.35rem;font-size:.85rem}
+.info-box .row:last-child{margin-bottom:0}
+.info-box label{color:var(--muted);min-width:80px;font-size:.78rem}
+.info-box span{color:var(--accent);font-family:monospace;font-size:.82rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧪 CaptchaSolve Test Page</h1>
+  <nav style="margin-left:auto;display:flex;gap:.5rem">
+    <a href="/worker">Worker Dashboard</a>
+    <a href="/admin">Admin Panel</a>
+    <a href="/guide">Guide</a>
+  </nav>
+</header>
+
+<div class="page">
+  <h2>Live CAPTCHA Test</h2>
+  <p class="sub">Test the full pipeline — solve a real Google reCAPTCHA v2 and get a token back via the API</p>
+
+  <!-- Section 1: Solve the CAPTCHA -->
+  <div class="card">
+    <h3>① Solve the CAPTCHA below</h3>
+    <p class="step-body" style="margin-bottom:1rem">This uses Google's <strong>official test site key</strong> — the CAPTCHA always accepts any solution (tick the checkbox or solve the image). Your worker dashboard can embed this page in an iframe and auto-capture the token.</p>
+
+    <div class="captcha-box">
+      <div class="g-recaptcha"
+           data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+           data-callback="onCaptchaSolved"
+           data-expired-callback="onCaptchaExpired"
+           data-theme="dark">
+      </div>
+      <p id="captcha-hint" style="font-size:.78rem;color:var(--muted)">Tick "I'm not a robot" to solve →</p>
+    </div>
+
+    <div id="token-area">
+      <div class="token-card">
+        <div class="token-label">✓ TOKEN RECEIVED</div>
+        <div class="token-value" id="token-display"></div>
+        <div class="copy-row">
+          <button class="copy-btn" onclick="copyToken()">📋 Copy Token</button>
+          <span id="copy-confirm" style="font-size:.75rem;color:var(--green);display:none">Copied!</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Submit via API and Poll -->
+  <div class="card">
+    <h3>② Send via API &amp; poll for result</h3>
+
+    <div class="step-row">
+      <div class="step-num">1</div>
+      <div class="step-body">Enter your API key (get it from <a href="/admin" style="color:var(--accent)">Admin Panel</a> → copy a key)</div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">2</div>
+      <div class="step-body">Click <strong>Submit Task</strong> — this POSTs to <code>/in.php</code> and then polls <code>/res.php</code> automatically</div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">3</div>
+      <div class="step-body">Your worker dashboard must be open and a worker logged in — they'll get the task pushed via WebSocket and solve it</div>
+    </div>
+
+    <div class="info-box">
+      <div class="row"><label>Page URL</label><span id="disp-url"></span></div>
+      <div class="row"><label>Site Key</label><span>6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI</span></div>
+      <div class="row"><label>Method</label><span>userrecaptcha</span></div>
+    </div>
+
+    <div class="form-row" style="margin-top:1rem">
+      <input id="api-key-input" type="text" placeholder="Paste your API key here…">
+      <button class="btn btn-blue" onclick="submitViaApi()">⚡ Submit Task</button>
+    </div>
+
+    <div id="solve-status"></div>
+    <div id="api-result"></div>
+  </div>
+
+  <!-- Section 3: Manual / Python test -->
+  <div class="card">
+    <h3>③ Or test with curl / Python</h3>
+    <p class="step-body" style="margin-bottom:.875rem">Use the real reCAPTCHA flow end-to-end from your terminal:</p>
+    <pre style="background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1rem;overflow-x:auto;font-size:.78rem;line-height:1.7"><code><span style="color:#8b949e"># 1. Submit reCAPTCHA task</span>
+<span style="color:#ff7b72">curl</span> -X POST <span style="color:#a5d6ff">"http://localhost:3000/in.php"</span> \
+  -d <span style="color:#a5d6ff">"key=YOUR_API_KEY&amp;method=userrecaptcha&amp;googlekey=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI&amp;pageurl=http://localhost:3000/test"</span>
+<span style="color:#8b949e"># → OK|a3f9c2b1e4d8abc7</span>
+
+<span style="color:#8b949e"># 2. Poll every 5s until OK|TOKEN</span>
+<span style="color:#ff7b72">curl</span> <span style="color:#a5d6ff">"http://localhost:3000/res.php?key=YOUR_API_KEY&amp;action=get&amp;id=a3f9c2b1e4d8abc7"</span>
+<span style="color:#8b949e"># → CAPCHA_NOT_READY  (keep polling)</span>
+<span style="color:#8b949e"># → OK|03AGdBq25...   (worker solved it!)</span></code></pre>
+
+    <p class="step-body" style="margin-top:.875rem">Or use <code>captchasolve.py</code> (drop-in 2captcha client):</p>
+    <pre style="background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1rem;overflow-x:auto;font-size:.78rem;line-height:1.7"><code><span style="color:#ff7b72">from</span> captchasolve <span style="color:#ff7b72">import</span> CaptchaSolver
+
+solver <span style="color:#ff7b72">=</span> CaptchaSolver(<span style="color:#a5d6ff">"YOUR_API_KEY"</span>, api_url=<span style="color:#a5d6ff">"http://localhost:3000"</span>)
+token  <span style="color:#ff7b72">=</span> solver.recaptcha(
+    <span style="color:#a5d6ff">"6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"</span>,
+    <span style="color:#a5d6ff">"http://localhost:3000/test"</span>
+)
+<span style="color:#ff7b72">print</span>(<span style="color:#a5d6ff">"Token:"</span>, token[:<span style="color:#79c0ff">30</span>] <span style="color:#ff7b72">+</span> <span style="color:#a5d6ff">"…"</span>)</code></pre>
+  </div>
+
+  <!-- Section 4: iframe embed info -->
+  <div class="card">
+    <h3>④ How the worker dashboard embeds this page</h3>
+    <p class="step-body" style="margin-bottom:.75rem">When a worker gets a reCAPTCHA task pointing to <code>http://localhost:3000/test</code>, their dashboard automatically shows an <strong>embedded iframe</strong> of this page. They solve it here, and the token is sent back via <code>postMessage</code> — no copy/paste needed.</p>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.875rem;font-size:.82rem;color:var(--muted);font-family:monospace;line-height:1.7">
+      Worker solves CAPTCHA in iframe →<br>
+      <code style="color:var(--green)">window.parent.postMessage({type:'captcha_token', token:'03AGdBq25…'}, '*')</code><br>
+      → Worker dashboard auto-fills the token → Worker clicks Submit ✓
+    </div>
+  </div>
+</div>
+
+<!-- Google reCAPTCHA script -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<script>
+// Set page URL display
+document.getElementById('disp-url').textContent = window.location.href;
+
+// Called when worker ticks the checkbox
+function onCaptchaSolved(token) {
+  document.getElementById('captcha-hint').style.display = 'none';
+  document.getElementById('token-display').textContent  = token;
+  document.getElementById('token-area').style.display   = 'block';
+
+  // If embedded in worker iframe, send token to parent automatically
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: 'captcha_token', token: token }, '*');
+  }
+}
+
+function onCaptchaExpired() {
+  document.getElementById('token-area').style.display  = 'none';
+  document.getElementById('captcha-hint').style.display = '';
+}
+
+function copyToken() {
+  const token = document.getElementById('token-display').textContent;
+  navigator.clipboard.writeText(token).then(() => {
+    document.getElementById('copy-confirm').style.display = 'inline';
+    setTimeout(() => document.getElementById('copy-confirm').style.display = 'none', 2000);
+  });
+}
+
+// ── Full API test: submit task → poll → show result ───────────────────────────
+let polling = false;
+
+async function submitViaApi() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key) { setStatus('err', '⚠️ Enter your API key first'); return; }
+  if (polling) return;
+  polling = true;
+
+  const resultEl = document.getElementById('api-result');
+  resultEl.style.display = 'none';
+
+  setStatus('wait', 'Submitting task to /in.php…');
+
+  try {
+    const params = new URLSearchParams({
+      key,
+      method:    'userrecaptcha',
+      googlekey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI',
+      pageurl:   window.location.href
+    });
+    const r    = await fetch('/in.php', { method: 'POST', body: params });
+    const text = await r.text();
+
+    if (!text.startsWith('OK|')) {
+      setStatus('err', '✕ Error: ' + text);
+      show(resultEl, '<span class="label-tag label-err">ERROR</span>' + text);
+      polling = false; return;
+    }
+
+    const taskId = text.split('|')[1];
+    setStatus('wait', `Task created (${taskId.substring(0,10)}…) — waiting for a worker to solve it…`);
+    show(resultEl, '<span class="label-tag label-ok">OK</span>Task ID: ' + taskId + '\nPolling /res.php every 5s…');
+
+    // Poll loop
+    let tries = 0;
+    const interval = setInterval(async () => {
+      tries++;
+      if (tries > 24) {
+        clearInterval(interval);
+        setStatus('err', '⌛ Timed out after 2 minutes — is a worker online?');
+        show(resultEl, prev => prev + '\nCAPCHA_NOT_READY (timeout)');
+        polling = false; return;
+      }
+      try {
+        const pr  = await fetch(`/res.php?key=${encodeURIComponent(key)}&action=get&id=${encodeURIComponent(taskId)}`);
+        const ans = await pr.text();
+        show(resultEl, prev => prev + `\n[poll ${tries}] ${ans}`);
+
+        if (ans.startsWith('OK|')) {
+          clearInterval(interval);
+          setStatus('ok', '✓ SOLVED! Token received from worker.');
+          polling = false;
+        } else if (ans.startsWith('ERROR_CAPTCHA')) {
+          clearInterval(interval);
+          setStatus('err', '✕ ' + ans);
+          polling = false;
+        }
+      } catch(e) { /* network glitch, keep polling */ }
+    }, 5000);
+
+  } catch(e) {
+    setStatus('err', '✕ Network error — is the server running?');
+    polling = false;
+  }
+}
+
+function setStatus(type, msg) {
+  const el = document.getElementById('solve-status');
+  el.className = 'solve-status ' + type; el.style.display = 'flex';
+  const spin = type === 'wait' ? '<span class="spinner"></span> ' : '';
+  el.innerHTML = spin + msg;
+}
+
+function show(el, content) {
+  el.style.display = 'block';
+  if (typeof content === 'function') {
+    el.innerHTML = content(el.innerHTML);
+  } else {
+    el.innerHTML = content;
+  }
+  el.scrollTop = el.scrollHeight;
+}
+</script>
+</body>
+</html>

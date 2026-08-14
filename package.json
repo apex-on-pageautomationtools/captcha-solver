@@ -1,0 +1,18 @@
+{
+  "name": "captcha-solver",
+  "version": "1.0.0",
+  "description": "Self-hosted CAPTCHA solving service (2captcha-compatible API)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "npx nodemon index.js"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2"
+  }
+}

@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CaptchaSolve — Complete Guide</title>
+<style>
+/* ── Tokens ───────────────────────────────────────────────────────────────── */
+:root {
+  --bg:        #f8f9fb;
+  --bg2:       #f0f2f6;
+  --surface:   #ffffff;
+  --border:    #dde1ea;
+  --border2:   #c8cdd8;
+  --text:      #111827;
+  --text2:     #374151;
+  --muted:     #6b7280;
+  --muted2:    #9ca3af;
+  --accent:    #0099cc;
+  --accent-lo: #e6f4fa;
+  --amber:     #d97706;
+  --amber-lo:  #fef3c7;
+  --green:     #059669;
+  --green-lo:  #d1fae5;
+  --red:       #dc2626;
+  --red-lo:    #fee2e2;
+  --purple:    #7c3aed;
+  --code-bg:   #f3f4f6;
+  --code-text: #1f2937;
+  --sidebar-w: 240px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:        #080d18;
+    --bg2:       #0d1525;
+    --surface:   #111827;
+    --border:    #1e2d45;
+    --border2:   #2a3f5f;
+    --text:      #e2e8f0;
+    --text2:     #cbd5e1;
+    --muted:     #64748b;
+    --muted2:    #475569;
+    --accent:    #00ccff;
+    --accent-lo: #001e2e;
+    --amber:     #f59e0b;
+    --amber-lo:  #1c1200;
+    --green:     #10b981;
+    --green-lo:  #022c1e;
+    --red:       #f87171;
+    --red-lo:    #2c0808;
+    --purple:    #a78bfa;
+    --code-bg:   #0d1525;
+    --code-text: #e2e8f0;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:        #080d18;
+  --bg2:       #0d1525;
+  --surface:   #111827;
+  --border:    #1e2d45;
+  --border2:   #2a3f5f;
+  --text:      #e2e8f0;
+  --text2:     #cbd5e1;
+  --muted:     #64748b;
+  --muted2:    #475569;
+  --accent:    #00ccff;
+  --accent-lo: #001e2e;
+  --amber:     #f59e0b;
+  --amber-lo:  #1c1200;
+  --green:     #10b981;
+  --green-lo:  #022c1e;
+  --red:       #f87171;
+  --red-lo:    #2c0808;
+  --purple:    #a78bfa;
+  --code-bg:   #0d1525;
+  --code-text: #e2e8f0;
+}
+
+/* ── Reset ───────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 15px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.65;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Progress bar ────────────────────────────────────────────────────────── */
+#progress {
+  position: fixed; top: 0; left: 0; z-index: 200;
+  height: 2px; width: 0%; background: var(--accent);
+  transition: width .1s linear;
+}
+
+/* ── Top nav ─────────────────────────────────────────────────────────────── */
+.topnav {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: .75rem 1.5rem;
+  display: flex; align-items: center; gap: 1rem;
+}
+.logo {
+  font-family: monospace; font-size: 1rem; font-weight: 700;
+  color: var(--accent); text-decoration: none; letter-spacing: -.02em;
+}
+.logo span { color: var(--text); font-weight: 400; }
+.topnav-links { display: flex; gap: .25rem; margin-left: auto; }
+.topnav-links a {
+  font-size: .8rem; color: var(--muted); text-decoration: none;
+  padding: .3rem .65rem; border-radius: 4px; transition: .15s;
+}
+.topnav-links a:hover { color: var(--text); background: var(--bg2); }
+#theme-btn {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  padding: .3rem .55rem; border-radius: 4px; cursor: pointer; font-size: .8rem;
+  transition: .15s;
+}
+#theme-btn:hover { color: var(--text); border-color: var(--border2); }
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.layout { display: flex; flex: 1; max-width: 1200px; margin: 0 auto; width: 100%; }
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  position: sticky; top: 49px; height: calc(100vh - 49px);
+  overflow-y: auto; padding: 1.5rem 0;
+  border-right: 1px solid var(--border);
+}
+.sidebar-group { margin-bottom: 1.25rem; padding: 0 1rem; }
+.sidebar-label {
+  font-size: .68rem; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--muted2);
+  margin-bottom: .4rem; padding: 0 .5rem;
+}
+.sidebar a {
+  display: block; padding: .35rem .5rem;
+  font-size: .825rem; color: var(--muted); text-decoration: none;
+  border-radius: 4px; border-left: 2px solid transparent;
+  transition: .15s; line-height: 1.35;
+}
+.sidebar a:hover { color: var(--text); background: var(--bg2); }
+.sidebar a.active {
+  color: var(--accent); border-left-color: var(--accent);
+  background: var(--accent-lo); font-weight: 600;
+}
+
+/* ── Main content ────────────────────────────────────────────────────────── */
+main { flex: 1; min-width: 0; padding: 2.5rem 2.75rem; }
+
+/* ── Headings ────────────────────────────────────────────────────────────── */
+h1, h2, h3, h4 {
+  font-family: monospace; text-wrap: balance; line-height: 1.2;
+  color: var(--text);
+}
+.page-title {
+  font-size: 1.75rem; font-weight: 700; letter-spacing: -.03em;
+  margin-bottom: .4rem;
+}
+.page-subtitle { font-size: 1rem; color: var(--muted); margin-bottom: 2.5rem; }
+
+section.doc-section {
+  margin-bottom: 3.5rem;
+  padding-top: .5rem;
+}
+section.doc-section h2 {
+  font-size: 1.2rem; font-weight: 700;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: .5rem; margin-bottom: 1.25rem;
+  display: flex; align-items: center; gap: .6rem;
+}
+section.doc-section h2 .sec-num {
+  font-size: .7rem; color: var(--accent); background: var(--accent-lo);
+  padding: .15rem .4rem; border-radius: 3px; font-weight: 700;
+  letter-spacing: .04em;
+}
+h3 { font-size: 1rem; margin: 1.5rem 0 .6rem; color: var(--text2); }
+p { color: var(--text2); margin-bottom: .75rem; }
+p:last-child { margin-bottom: 0; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Steps ───────────────────────────────────────────────────────────────── */
+.steps { display: flex; flex-direction: column; gap: .5rem; margin: 1rem 0; }
+.step {
+  display: flex; gap: 1rem; align-items: flex-start;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: .875rem 1rem;
+}
+.step-num {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--accent); color: #000;
+  font-family: monospace; font-size: .75rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.step-body { flex: 1; min-width: 0; }
+.step-body strong { font-size: .9rem; color: var(--text); display: block; margin-bottom: .2rem; }
+.step-body p { font-size: .85rem; margin: 0; }
+
+/* ── Code blocks ─────────────────────────────────────────────────────────── */
+.code-wrap { position: relative; margin: .875rem 0; }
+pre {
+  background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 1rem 1.1rem;
+  overflow-x: auto; font-size: .8rem; line-height: 1.75;
+  font-family: 'Cascadia Code','Fira Code','Consolas',monospace;
+  color: var(--code-text);
+}
+code {
+  font-family: 'Cascadia Code','Fira Code','Consolas',monospace;
+  font-size: .82em; background: var(--code-bg);
+  border: 1px solid var(--border); border-radius: 3px;
+  padding: .1em .35em; color: var(--code-text);
+}
+pre code { background: none; border: none; padding: 0; font-size: inherit; }
+.copy-btn {
+  position: absolute; top: .5rem; right: .5rem;
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--muted); font-size: .72rem; padding: .25rem .5rem;
+  border-radius: 4px; cursor: pointer; transition: .15s; font-family: monospace;
+}
+.copy-btn:hover { color: var(--text); border-color: var(--border2); }
+.copy-btn.copied { color: var(--green); border-color: var(--green); }
+/* syntax */
+.k { color: #e06c75; } /* keyword */
+.s { color: #98c379; } /* string */
+.c { color: var(--muted2); font-style: italic; } /* comment */
+.v { color: #61afef; } /* value/number */
+.n { color: #c678dd; } /* name/function */
+.b { color: #d19a66; } /* builtin */
+
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
+.tabs-wrap { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin: .875rem 0; }
+.tab-bar {
+  display: flex; background: var(--bg2); border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.tab-btn {
+  padding: .5rem .9rem; font-size: .78rem; font-family: monospace; font-weight: 600;
+  color: var(--muted); cursor: pointer; border: none; background: none;
+  border-bottom: 2px solid transparent; white-space: nowrap; transition: .15s;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--surface); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.tab-panel pre { border: none; border-radius: 0; margin: 0; }
+
+/* ── Callouts ────────────────────────────────────────────────────────────── */
+.callout {
+  display: flex; gap: .75rem; padding: .875rem 1rem;
+  border-radius: 6px; margin: 1rem 0; font-size: .875rem;
+  border-left: 3px solid;
+}
+.callout-icon { flex-shrink: 0; font-size: 1rem; line-height: 1.5; }
+.callout-body { flex: 1; }
+.callout-body p { font-size: .875rem; }
+.callout.info { background: var(--accent-lo); border-color: var(--accent); }
+.callout.info .callout-body, .callout.info .callout-body p { color: var(--accent); }
+.callout.warn { background: var(--amber-lo); border-color: var(--amber); }
+.callout.warn .callout-body, .callout.warn .callout-body p { color: var(--amber); }
+.callout.good { background: var(--green-lo); border-color: var(--green); }
+.callout.good .callout-body, .callout.good .callout-body p { color: var(--green); }
+.callout.tip  { background: var(--bg2); border-color: var(--purple); }
+.callout.tip .callout-body, .callout.tip .callout-body p { color: var(--purple); }
+
+/* ── Cards grid ──────────────────────────────────────────────────────────── */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: .75rem; margin: 1rem 0; }
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: .875rem;
+}
+.card .card-icon { font-size: 1.25rem; margin-bottom: .4rem; }
+.card .card-title { font-family: monospace; font-size: .85rem; font-weight: 700; margin-bottom: .25rem; }
+.card .card-desc { font-size: .78rem; color: var(--muted); line-height: 1.4; }
+.card .badge {
+  display: inline-block; margin-top: .4rem;
+  font-size: .68rem; font-weight: 700; padding: .1rem .4rem;
+  border-radius: 3px;
+}
+.badge-easy { background: var(--green-lo); color: var(--green); }
+.badge-hard { background: var(--red-lo); color: var(--red); }
+.badge-med  { background: var(--amber-lo); color: var(--amber); }
+
+/* ── Table ───────────────────────────────────────────────────────────────── */
+.tbl-wrap { overflow-x: auto; margin: .875rem 0; }
+table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+th {
+  text-align: left; padding: .5rem .75rem;
+  border-bottom: 2px solid var(--border); font-family: monospace;
+  font-size: .75rem; letter-spacing: .04em; color: var(--muted);
+}
+td {
+  padding: .5rem .75rem; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg2); }
+td code { font-size: .78rem; }
+
+/* ── Architecture diagram ────────────────────────────────────────────────── */
+.arch {
+  display: flex; gap: 0; align-items: stretch;
+  margin: 1rem 0; overflow-x: auto;
+}
+.arch-box {
+  flex: 1; min-width: 120px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: .875rem .75rem; text-align: center;
+}
+.arch-box .arch-icon { font-size: 1.5rem; margin-bottom: .35rem; }
+.arch-box .arch-name { font-family: monospace; font-size: .78rem; font-weight: 700; color: var(--text); }
+.arch-box .arch-sub  { font-size: .7rem; color: var(--muted); margin-top: .2rem; line-height: 1.3; }
+.arch-box.accent { border-color: var(--accent); }
+.arch-box.green  { border-color: var(--green); }
+.arch-box.amber  { border-color: var(--amber); }
+.arch-arrow {
+  flex-shrink: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; width: 48px;
+  font-size: .68rem; color: var(--muted); gap: .2rem;
+}
+.arch-arrow .line {
+  width: 100%; height: 1px; background: var(--border);
+  position: relative;
+}
+.arch-arrow .line::after {
+  content: ''; position: absolute; right: -1px; top: -4px;
+  border-left: 7px solid var(--border);
+  border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+}
+
+/* ── Flow list ───────────────────────────────────────────────────────────── */
+.flow { display: flex; flex-direction: column; gap: .25rem; margin: 1rem 0; }
+.flow-item {
+  display: flex; gap: .75rem; align-items: flex-start; padding: .5rem .75rem;
+  border-left: 2px solid var(--border); margin-left: .5rem;
+}
+.flow-item:first-child { border-radius: 4px 4px 0 0; }
+.flow-item:last-child  { border-radius: 0 0 4px 4px; border-left-color: var(--green); }
+.flow-dot {
+  flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border); margin-top: .45rem;
+}
+.flow-item:last-child .flow-dot { background: var(--green); }
+.flow-item p { font-size: .875rem; margin: 0; }
+
+/* ── FAQ ─────────────────────────────────────────────────────────────────── */
+details {
+  border: 1px solid var(--border); border-radius: 6px;
+  overflow: hidden; margin-bottom: .5rem;
+}
+summary {
+  padding: .75rem 1rem; cursor: pointer; font-size: .9rem;
+  font-weight: 600; list-style: none; display: flex; justify-content: space-between;
+  align-items: center; transition: background .15s;
+}
+summary:hover { background: var(--bg2); }
+summary::after { content: '+'; font-family: monospace; color: var(--muted); font-size: 1.1rem; }
+details[open] summary::after { content: '−'; color: var(--accent); }
+details[open] summary { background: var(--bg2); }
+.faq-body { padding: .75rem 1rem 1rem; font-size: .875rem; border-top: 1px solid var(--border); }
+.faq-body p { color: var(--text2); }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  main { padding: 1.5rem 1.25rem; }
+  .arch { flex-direction: column; }
+  .arch-arrow { width: 100%; height: 36px; flex-direction: row; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; scroll-behavior: auto !important; }
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<!-- Top nav -->
+<nav class="topnav">
+  <a class="logo" href="/">⚡ CaptchaSolve<span> / guide</span></a>
+  <div class="topnav-links">
+    <a href="/">API Docs</a>
+    <a href="/worker">Worker</a>
+    <a href="/admin">Admin</a>
+  </div>
+  <button id="theme-btn" onclick="toggleTheme()" title="Toggle theme">◑</button>
+</nav>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-group">
+      <div class="sidebar-label">Getting Started</div>
+      <a href="#quick-start">Quick Start</a>
+      <a href="#how-it-works">How It Works</a>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-label">CAPTCHA Types</div>
+      <a href="#captcha-types">All Types</a>
+      <a href="#image-captcha">Image CAPTCHA</a>
+      <a href="#recaptcha">reCAPTCHA v2 / v3</a>
+      <a href="#hcaptcha">hCaptcha</a>
+      <a href="#audio-captcha">🔊 Audio / Voice</a>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-label">Workers</div>
+      <a href="#worker-dashboard">Worker Dashboard</a>
+      <a href="#how-solving-works">How Solving Works</a>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-label">Using the API</div>
+      <a href="#api-reference">API Reference</a>
+      <a href="#python-client">Python Client</a>
+      <a href="#real-world">Real-World Example</a>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-label">Admin</div>
+      <a href="#admin-panel">Admin Panel</a>
+      <a href="#faq">FAQ</a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main id="main">
+    <h1 class="page-title">CaptchaSolve — Complete Guide</h1>
+    <p class="page-subtitle">Everything you need to set up, run, and integrate your self-hosted CAPTCHA solving service.</p>
+
+    <!-- ── 1. Quick Start ─────────────────────────────────────────────────── -->
+    <section class="doc-section" id="quick-start">
+      <h2><span class="sec-num">01</span> Quick Start</h2>
+      <p>Get the server running in under 2 minutes. No paid services, no cloud accounts — just Node.js.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>Make sure Node.js 22+ is installed</strong>
+            <p>The server uses Node's built-in SQLite (v22+). Check your version:</p>
+          </div>
+        </div>
+      </div>
+      <div class="code-wrap">
+        <pre><span class="n">node</span> <span class="s">--version</span>   <span class="c"># must be v22 or higher</span></pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Open the project folder and install dependencies</strong>
+            <p>Only 3 lightweight packages — no native compilation needed.</p>
+          </div>
+        </div>
+      </div>
+      <div class="code-wrap">
+        <pre><span class="n">cd</span> <span class="s">D:\captcha-solver</span>
+<span class="n">npm</span> install</pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>Start the server</strong>
+            <p>On first run it prints a demo API key — save it!</p>
+          </div>
+        </div>
+      </div>
+      <div class="code-wrap">
+        <pre><span class="n">node</span> index.js</pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+
+      <div class="callout good">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body">
+          <p>Server is running. Open these in your browser:</p>
+          <p style="margin-top:.4rem">
+            <code>http://localhost:3000</code> — API docs &nbsp;·&nbsp;
+            <code>http://localhost:3000/worker</code> — Worker Dashboard &nbsp;·&nbsp;
+            <code>http://localhost:3000/admin</code> — Admin Panel
+          </p>
+        </div>
+      </div>
+
+      <h3>Keep it running in the background</h3>
+      <div class="code-wrap">
+        <pre><span class="c"># Install PM2 once</span>
+<span class="n">npm</span> install -g pm2
+
+<span class="c"># Start (survives terminal close + auto-restarts on crash)</span>
+<span class="n">pm2</span> start D:\captcha-solver\index.js --name captcha-solver
+
+<span class="c"># Auto-start on Windows reboot</span>
+<span class="n">pm2</span> startup
+<span class="n">pm2</span> save</pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+    </section>
+
+    <!-- ── 2. How It Works ────────────────────────────────────────────────── -->
+    <section class="doc-section" id="how-it-works">
+      <h2><span class="sec-num">02</span> How It Works</h2>
+      <p>The service has three actors: the <strong>client</strong> (your script), the <strong>server</strong> (this app), and <strong>human workers</strong> who solve CAPTCHAs in their browser.</p>
+
+      <div class="arch">
+        <div class="arch-box accent">
+          <div class="arch-icon">🤖</div>
+          <div class="arch-name">Client Script</div>
+          <div class="arch-sub">Your Python / Node / PHP automation</div>
+        </div>
+        <div class="arch-arrow"><div class="line"></div><span>REST API</span></div>
+        <div class="arch-box">
+          <div class="arch-icon">⚡</div>
+          <div class="arch-name">CaptchaSolve Server</div>
+          <div class="arch-sub">Express + SQLite + Socket.io</div>
+        </div>
+        <div class="arch-arrow"><div class="line"></div><span>WebSocket</span></div>
+        <div class="arch-box green">
+          <div class="arch-icon">👷</div>
+          <div class="arch-name">Human Worker</div>
+          <div class="arch-sub">Solves in real browser</div>
+        </div>
+      </div>
+
+      <div class="flow">
+        <div class="flow-item"><div class="flow-dot"></div><p>Client POSTs the CAPTCHA image or reCAPTCHA params to <code>/in.php</code> → gets a task ID back.</p></div>
+        <div class="flow-item"><div class="flow-dot"></div><p>Server stores the task in SQLite and instantly pushes it to the next available worker via WebSocket.</p></div>
+        <div class="flow-item"><div class="flow-dot"></div><p>Worker sees the challenge in their dashboard, solves it (types text or pastes a token), submits.</p></div>
+        <div class="flow-item"><div class="flow-dot"></div><p>Server stores the solution and credits the worker <code>$0.001</code>. Client's balance is debited <code>$0.002</code>.</p></div>
+        <div class="flow-item"><div class="flow-dot"></div><p>Client polls <code>GET /res.php?id=TASK_ID</code> every 5 s → receives <code>OK|TOKEN</code> and injects it.</p></div>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-icon">ℹ️</div>
+        <div class="callout-body"><p>The server is <strong>2captcha-compatible</strong>: any library that works with 2captcha.com will work with your server — just change the <code>api_url</code> to <code>http://localhost:3000</code>.</p></div>
+      </div>
+    </section>
+
+    <!-- ── 3. CAPTCHA Types ───────────────────────────────────────────────── -->
+    <section class="doc-section" id="captcha-types">
+      <h2><span class="sec-num">03</span> Supported CAPTCHA Types</h2>
+
+      <div class="cards">
+        <div class="card">
+          <div class="card-icon">🖼️</div>
+          <div class="card-title">Image CAPTCHA</div>
+          <div class="card-desc">Distorted text in an image. Worker reads and types the text.</div>
+          <span class="badge badge-easy">Easiest</span>
+        </div>
+        <div class="card">
+          <div class="card-icon">🔄</div>
+          <div class="card-title">reCAPTCHA v2</div>
+          <div class="card-desc">Google checkbox / image grid. Worker solves on the real target page.</div>
+          <span class="badge badge-med">Medium</span>
+        </div>
+        <div class="card">
+          <div class="card-icon">🔐</div>
+          <div class="card-title">hCaptcha</div>
+          <div class="card-desc">Used by Discord, Cloudflare. Same flow as reCAPTCHA v2.</div>
+          <span class="badge badge-med">Medium</span>
+        </div>
+        <div class="card">
+          <div class="card-icon">☁️</div>
+          <div class="card-title">Turnstile</div>
+          <div class="card-desc">Cloudflare's invisible challenge. Token-based like reCAPTCHA.</div>
+          <span class="badge badge-med">Medium</span>
+        </div>
+        <div class="card">
+          <div class="card-icon">🔊</div>
+          <div class="card-title">Audio / Voice</div>
+          <div class="card-desc">Worker clicks the audio option on reCAPTCHA, listens, types what they hear.</div>
+          <span class="badge badge-med">Medium</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Image ─────────────────────────────────────────────────────────── -->
+    <section class="doc-section" id="image-captcha">
+      <h2><span class="sec-num">04</span> Image CAPTCHA</h2>
+      <p>The simplest type. Your script downloads a CAPTCHA image, encodes it as base64, sends it to the API. A worker reads the image and types the answer.</p>
+
+      <div class="tabs-wrap">
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="switchTab(this,'img-py')">Python</button>
+          <button class="tab-btn" onclick="switchTab(this,'img-node')">Node.js</button>
+        </div>
+        <div class="tab-panel active" id="img-py">
+          <pre><span class="k">import</span> requests, base64
+<span class="k">from</span> captchasolve <span class="k">import</span> CaptchaSolver
+
+solver = <span class="n">CaptchaSolver</span>(<span class="s">"YOUR_API_KEY"</span>)
+
+<span class="c"># From a file</span>
+answer = solver.<span class="n">image</span>(<span class="s">"captcha.png"</span>)
+<span class="b">print</span>(answer)   <span class="c"># "XK92P"</span>
+
+<span class="c"># From a URL</span>
+img_bytes = requests.<span class="n">get</span>(<span class="s">"https://site.com/captcha.png"</span>).content
+b64 = base64.<span class="n">b64encode</span>(img_bytes).<span class="n">decode</span>()
+answer = solver.<span class="n">image_b64</span>(b64)</pre>
+        </div>
+        <div class="tab-panel" id="img-node">
+          <pre><span class="k">const</span> { <span class="n">CaptchaSolver</span> } = <span class="n">require</span>(<span class="s">'./captchasolve'</span>);
+<span class="k">const</span> fs = <span class="n">require</span>(<span class="s">'fs'</span>);
+
+<span class="k">const</span> solver = <span class="k">new</span> <span class="n">CaptchaSolver</span>(<span class="s">'YOUR_API_KEY'</span>);
+<span class="k">const</span> b64 = fs.<span class="n">readFileSync</span>(<span class="s">'captcha.png'</span>).<span class="n">toString</span>(<span class="s">'base64'</span>);
+<span class="k">const</span> answer = <span class="k">await</span> solver.<span class="n">image</span>(b64);
+console.<span class="n">log</span>(answer);</pre>
+        </div>
+      </div>
+      <div class="callout info">
+        <div class="callout-icon">ℹ️</div>
+        <div class="callout-body"><p>Send the image as a <strong>base64-encoded string</strong> in the <code>body</code> parameter. Supports PNG, JPEG, GIF, BMP.</p></div>
+      </div>
+    </section>
+
+    <!-- ── reCAPTCHA ─────────────────────────────────────────────────────── -->
+    <section class="doc-section" id="recaptcha">
+      <h2><span class="sec-num">05</span> reCAPTCHA v2 / v3</h2>
+      <p>reCAPTCHA tokens are <strong>cryptographically signed</strong> by Google and bound to a specific domain + site key. A worker must open the exact target page and solve the challenge there — a token solved on one domain won't work on another.</p>
+
+      <h3>How to find the site key</h3>
+      <p>Look in the page's HTML source for:</p>
+      <div class="code-wrap">
+        <pre><span class="c">&lt;!-- Option A: div with data-sitekey --&gt;</span>
+&lt;<span class="k">div</span> class=<span class="s">"g-recaptcha"</span> data-sitekey=<span class="s">"6Le-wvkSAAAAAPBM..."</span>&gt;&lt;/div&gt;
+
+<span class="c">&lt;!-- Option B: script tag parameter --&gt;</span>
+<span class="k">grecaptcha</span>.<span class="n">render</span>({ sitekey: <span class="s">'6Le-wvkSAAAAAPBM...'</span> })
+
+<span class="c"># Or in Python with BeautifulSoup:</span>
+soup.<span class="n">find</span>(<span class="s">'div'</span>, class_=<span class="s">'g-recaptcha'</span>)[<span class="s">'data-sitekey'</span>]</pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+
+      <h3>Solve and inject the token</h3>
+      <div class="tabs-wrap">
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="switchTab(this,'rc-requests')">requests (no browser)</button>
+          <button class="tab-btn" onclick="switchTab(this,'rc-selenium')">Selenium</button>
+          <button class="tab-btn" onclick="switchTab(this,'rc-playwright')">Playwright</button>
+        </div>
+        <div class="tab-panel active" id="rc-requests">
+          <pre><span class="k">import</span> requests
+<span class="k">from</span> captchasolve <span class="k">import</span> CaptchaSolver
+
+solver = <span class="n">CaptchaSolver</span>(<span class="s">"YOUR_API_KEY"</span>)
+token  = solver.<span class="n">recaptcha</span>(<span class="s">"6Le-wvkSAAAAAPBM..."</span>, <span class="s">"https://target.com/login"</span>)
+
+<span class="c"># Inject token in the form POST</span>
+requests.<span class="n">post</span>(<span class="s">"https://target.com/login"</span>, data={
+    <span class="s">"username"</span>:            <span class="s">"my_user"</span>,
+    <span class="s">"password"</span>:            <span class="s">"my_pass"</span>,
+    <span class="s">"g-recaptcha-response"</span>: token,   <span class="c"># ← inject here</span>
+})</pre>
+        </div>
+        <div class="tab-panel" id="rc-selenium">
+          <pre><span class="k">from</span> selenium <span class="k">import</span> webdriver
+<span class="k">from</span> captchasolve <span class="k">import</span> CaptchaSolver
+
+driver = webdriver.<span class="n">Chrome</span>()
+driver.<span class="n">get</span>(<span class="s">"https://target.com/login"</span>)
+
+<span class="c"># Read sitekey from the page</span>
+el = driver.<span class="n">find_element</span>(<span class="s">"css selector"</span>, <span class="s">".g-recaptcha"</span>)
+site_key = el.<span class="n">get_attribute</span>(<span class="s">"data-sitekey"</span>)
+
+<span class="c"># Solve via API</span>
+solver = <span class="n">CaptchaSolver</span>(<span class="s">"YOUR_API_KEY"</span>)
+token  = solver.<span class="n">recaptcha</span>(site_key, driver.<span class="n">current_url</span>)
+
+<span class="c"># Inject into page</span>
+driver.<span class="n">execute_script</span>(
+    <span class="s">f'document.getElementById("g-recaptcha-response").value = "{token}"'</span>
+)
+driver.<span class="n">find_element</span>(<span class="s">"css selector"</span>, <span class="s">"button[type=submit]"</span>).<span class="n">click</span>()</pre>
+        </div>
+        <div class="tab-panel" id="rc-playwright">
+          <pre><span class="k">from</span> playwright.async_api <span class="k">import</span> async_playwright
+<span class="k">from</span> captchasolve <span class="k">import</span> CaptchaSolver
+<span class="k">import</span> asyncio
+
+<span class="k">async def</span> <span class="n">main</span>():
+    <span class="k">async with</span> async_playwright() <span class="k">as</span> p:
+        browser = <span class="k">await</span> p.chromium.<span class="n">launch</span>(headless=<span class="k">False</span>)
+        page    = <span class="k">await</span> browser.<span class="n">new_page</span>()
+        <span class="k">await</span> page.<span class="n">goto</span>(<span class="s">"https://target.com/login"</span>)
+
+        site_key = <span class="k">await</span> page.<span class="n">get_attribute</span>(<span class="s">".g-recaptcha"</span>, <span class="s">"data-sitekey"</span>)
+
+        solver = <span class="n">CaptchaSolver</span>(<span class="s">"YOUR_API_KEY"</span>)
+        token  = solver.<span class="n">recaptcha</span>(site_key, page.<span class="n">url</span>)
+
+        <span class="c"># Inject token</span>
+        <span class="k">await</span> page.<span class="n">evaluate</span>(
+            <span class="s">f'document.getElementById("g-recaptcha-response").value = "{token}"'</span>
+        )
+        <span class="k">await</span> page.<span class="n">click</span>(<span class="s">"button[type=submit]"</span>)
+        <span class="k">await</span> page.<span class="n">wait_for_navigation</span>()
+
+asyncio.<span class="n">run</span>(main())</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── hCaptcha ──────────────────────────────────────────────────────── -->
+    <section class="doc-section" id="hcaptcha">
+      <h2><span class="sec-num">06</span> hCaptcha</h2>
+      <p>Used by Discord, some Cloudflare-protected sites. Same flow as reCAPTCHA — find the site key, solve, inject into the field <code>h-captcha-response</code>.</p>
+      <div class="code-wrap">
+        <pre><span class="c"># Site key is in:  data-sitekey attribute of .h-captcha div</span>
+token = solver.<span class="n">hcaptcha</span>(<span class="s">"a5f74b19-9e45-40e0-b45d-47ff91b7a6dd"</span>, <span class="s">"https://discord.com/register"</span>)
+
+requests.<span class="n">post</span>(<span class="s">"https://discord.com/register"</span>, json={
+    <span class="s">"username"</span>:           <span class="s">"myuser"</span>,
+    <span class="s">"h-captcha-response"</span>:  token,   <span class="c"># ← key name is different from reCAPTCHA</span>
+})</pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+    </section>
+
+    <!-- ── Audio CAPTCHA ─────────────────────────────────────────────────── -->
+    <section class="doc-section" id="audio-captcha">
+      <h2><span class="sec-num">07</span> 🔊 Audio / Voice CAPTCHA</h2>
+      <p>Both 2captcha and this service support <strong>audio challenges</strong> — they are always solved by human workers, not by AI speech recognition.</p>
+
+      <div class="callout warn">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body"><p><strong>Common misconception:</strong> people assume 2captcha uses AI or speech-to-text for voice CAPTCHAs. It doesn't — real workers listen to the audio and type what they hear. This is more accurate than automated transcription because reCAPTCHA audio is specifically designed to fool STT engines.</p></div>
+      </div>
+
+      <h3>How audio CAPTCHA works (step by step)</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>Client requests audio solve</strong>
+            <p>Send the task to the API with <code>method=audio</code> and the audio file URL or base64-encoded MP3/WAV.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Worker receives the task</strong>
+            <p>The worker dashboard plays the audio file through their speakers/headphones.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>Worker types what they hear</strong>
+            <p>reCAPTCHA audio typically says a series of digits, e.g. "3 7 1 9 4". The worker types <code>37194</code> and submits.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>Token returned to client</strong>
+            <p>Same as any other CAPTCHA type — <code>OK|TOKEN</code> from the polling endpoint.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>Typical approach with reCAPTCHA (audio path)</h3>
+      <div class="code-wrap">
+        <pre><span class="c"># With Selenium: click the audio button, get the audio URL, send to API</span>
+<span class="k">from</span> selenium <span class="k">import</span> webdriver
+
+<span class="c"># Switch to reCAPTCHA iframe, click audio button</span>
+driver.<span class="n">switch_to</span>.<span class="n">frame</span>(<span class="s">"recaptcha iframe"</span>)
+driver.<span class="n">find_element</span>(<span class="s">"id"</span>, <span class="s">"recaptcha-audio-button"</span>).<span class="n">click</span>()
+
+<span class="c"># Get the audio URL</span>
+audio_url = driver.<span class="n">find_element</span>(<span class="s">"id"</span>, <span class="s">"audio-source"</span>).<span class="n">get_attribute</span>(<span class="s">"src"</span>)
+
+<span class="c"># Submit to API as audio task — worker listens & types answer</span>
+<span class="c"># (This is still a plain text-answer task, not a token task)</span>
+answer = solver.<span class="n">audio</span>(audio_url)
+<span class="c"># → worker hears "3 7 1 9 4" and types "37194"</span>
+
+<span class="c"># Type the answer into the reCAPTCHA audio input box</span>
+driver.<span class="n">find_element</span>(<span class="s">"id"</span>, <span class="s">"audio-response"</span>).<span class="n">send_keys</span>(answer)
+driver.<span class="n">find_element</span>(<span class="s">"id"</span>, <span class="s">"recaptcha-verify-button"</span>).<span class="n">click</span>()</pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body"><p>Audio CAPTCHAs exist because they're required for accessibility (visually impaired users). Ironically that same channel is often easier to solve programmatically — which is why many sites rate-limit or block repeated audio challenge requests.</p></div>
+      </div>
+    </section>
+
+    <!-- ── Worker Dashboard ──────────────────────────────────────────────── -->
+    <section class="doc-section" id="worker-dashboard">
+      <h2><span class="sec-num">08</span> Worker Dashboard</h2>
+      <p>Workers are the humans who solve CAPTCHAs. They register at <code>/worker</code>, log in, and tasks are pushed to them automatically via WebSocket.</p>
+
+      <h3>Worker workflow</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>Register an account</strong>
+            <p>Go to <a href="/worker">/worker</a> → click Register → choose a username and password (min 6 chars).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Connect and wait</strong>
+            <p>After login, the dashboard connects via WebSocket. The status indicator turns green. Tasks arrive automatically — no need to refresh.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>Solve each task</strong>
+            <p>For <strong>image</strong> tasks: see the image, type the text, press Enter or Submit.<br>
+               For <strong>reCAPTCHA / hCaptcha</strong> tasks: open the shown URL in a new tab, solve the challenge, run <code>grecaptcha.getResponse()</code> in DevTools console, paste the token back.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>Earn credits</strong>
+            <p>Each solved task credits <code>$0.001</code> to the worker's balance. Balance is shown live in the sidebar.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-icon">ℹ️</div>
+        <div class="callout-body"><p>Workers can click <strong>"Can't Solve"</strong> to skip a task — it returns to the queue for another worker. The client is not charged for failed tasks.</p></div>
+      </div>
+    </section>
+
+    <!-- ── How solving works in browser ─────────────────────────────────── -->
+    <section class="doc-section" id="how-solving-works">
+      <h2><span class="sec-num">09</span> How Workers Actually Solve in the Browser</h2>
+
+      <h3>Image CAPTCHA — simple</h3>
+      <p>The dashboard displays the image directly (base64 → <code>&lt;img&gt;</code> tag). Worker reads the distorted text and types it. No special browser setup needed.</p>
+
+      <h3>reCAPTCHA / hCaptcha — requires the real page</h3>
+      <p>These tokens are <strong>domain-locked</strong> — Google signs each token with the site key + origin domain. A worker cannot solve a reCAPTCHA "somewhere else" and reuse the token. They must open the <em>actual target page</em>.</p>
+
+      <div class="callout warn">
+        <div class="callout-icon">🔒</div>
+        <div class="callout-body"><p>A reCAPTCHA token from <code>login.example.com</code> will be rejected if submitted on <code>shop.example.com</code> — even with the same site key. The domain is part of the cryptographic signature.</p></div>
+      </div>
+
+      <h3>The copy-paste method (current system)</h3>
+      <p>The worker dashboard shows the target URL. Worker opens it in a new tab, solves the CAPTCHA, then extracts the token:</p>
+      <div class="code-wrap">
+        <pre><span class="c">// In Chrome DevTools → Console (on the target page after solving):</span>
+<span class="n">grecaptcha</span>.<span class="n">getResponse</span>()
+<span class="c">// Outputs: "03AGdBq25_XXXXX..."  ← copy this and paste into worker dashboard</span>
+
+<span class="c">// For hCaptcha:</span>
+<span class="n">hcaptcha</span>.<span class="n">getResponse</span>()</pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+
+      <h3>The extension method (advanced)</h3>
+      <p>Workers install a Chrome extension that automatically captures the token the moment a CAPTCHA is solved on any tab — no copy-paste needed. This is how real 2captcha workers operate. The extension uses <code>content_scripts</code> to hook into the <code>grecaptcha</code> object on every page.</p>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>Worker effort</th><th>Works on</th><th>Build complexity</th></tr></thead>
+          <tbody>
+            <tr><td>Copy-paste (current)</td><td>Medium — open tab, solve, copy token</td><td>All sites</td><td>None — already works</td></tr>
+            <tr><td>Chrome extension</td><td>Low — just solve, token auto-sent</td><td>All sites</td><td>High — need to build extension</td></tr>
+            <tr><td>iframe embed</td><td>Low — solve inline</td><td>Sites without X-Frame-Options</td><td>Medium</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── API Reference ─────────────────────────────────────────────────── -->
+    <section class="doc-section" id="api-reference">
+      <h2><span class="sec-num">10</span> API Reference</h2>
+
+      <h3>POST /in.php — Submit a task</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Parameter</th><th>Required</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>key</code></td><td>Always</td><td>Your API key from Admin panel</td></tr>
+            <tr><td><code>method</code></td><td>Always</td><td><code>base64</code> · <code>userrecaptcha</code> · <code>hcaptcha</code> · <code>turnstile</code></td></tr>
+            <tr><td><code>body</code></td><td>Image only</td><td>Base64-encoded image string</td></tr>
+            <tr><td><code>googlekey</code></td><td>Token types</td><td>The site key from the target page</td></tr>
+            <tr><td><code>pageurl</code></td><td>Token types</td><td>Full URL of the page with the CAPTCHA</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Response:</strong> <code>OK|TASK_ID</code> on success, or an error code.</p>
+
+      <h3>GET /res.php — Poll for result</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Parameter</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>key</code></td><td>Your API key</td></tr>
+            <tr><td><code>action</code></td><td><code>get</code> (poll result) · <code>getbalance</code> · <code>reportbad</code></td></tr>
+            <tr><td><code>id</code></td><td>Task ID from <code>/in.php</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Responses:</strong> <code>CAPCHA_NOT_READY</code> → keep polling every 5s · <code>OK|TOKEN</code> → done · error codes below.</p>
+
+      <h3>Error codes</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Code</th><th>Meaning</th><th>Fix</th></tr></thead>
+          <tbody>
+            <tr><td><code>ERROR_WRONG_USER_KEY</code></td><td>API key invalid or missing</td><td>Check the key in Admin panel</td></tr>
+            <tr><td><code>ERROR_ZERO_BALANCE</code></td><td>Client balance is 0</td><td>Top up balance in Admin panel</td></tr>
+            <tr><td><code>ERROR_NO_SLOT_AVAILABLE</code></td><td>Required param missing</td><td>Check <code>body</code> / <code>googlekey</code> / <code>pageurl</code></td></tr>
+            <tr><td><code>CAPCHA_NOT_READY</code></td><td>Still solving — not an error</td><td>Wait 5s and poll again</td></tr>
+            <tr><td><code>ERROR_CAPTCHA_UNSOLVABLE</code></td><td>Worker couldn't solve it</td><td>Submit the task again</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Python Client ─────────────────────────────────────────────────── -->
+    <section class="doc-section" id="python-client">
+      <h2><span class="sec-num">11</span> Python Client (Easiest Way)</h2>
+      <p>Copy <code>captchasolve.py</code> into your project. No pip install — uses only Python built-ins.</p>
+
+      <div class="code-wrap">
+        <pre><span class="k">from</span> captchasolve <span class="k">import</span> CaptchaSolver
+
+<span class="c"># Point to your local server</span>
+solver = <span class="n">CaptchaSolver</span>(<span class="s">"YOUR_API_KEY"</span>, api_url=<span class="s">"http://localhost:3000"</span>)
+
+<span class="c"># ── All available methods ──────────────────────────────────────────</span>
+solver.<span class="n">image</span>(<span class="s">"path/to/captcha.png"</span>)          <span class="c"># → "XK92P"</span>
+solver.<span class="n">image_b64</span>(<span class="s">"iVBORw0KGgo..."</span>)          <span class="c"># → "XK92P"</span>
+solver.<span class="n">recaptcha</span>(<span class="s">"SITE_KEY"</span>, <span class="s">"PAGE_URL"</span>)    <span class="c"># → "03AGdBq25..."</span>
+solver.<span class="n">recaptcha_v3</span>(<span class="s">"SITE_KEY"</span>, <span class="s">"PAGE_URL"</span>) <span class="c"># → token</span>
+solver.<span class="n">hcaptcha</span>(<span class="s">"SITE_KEY"</span>, <span class="s">"PAGE_URL"</span>)    <span class="c"># → token</span>
+solver.<span class="n">turnstile</span>(<span class="s">"SITE_KEY"</span>, <span class="s">"PAGE_URL"</span>)   <span class="c"># → token</span>
+solver.<span class="n">balance</span>()                             <span class="c"># → 9.984</span>
+solver.<span class="n">report_bad</span>(<span class="s">"TASK_ID"</span>)               <span class="c"># refund bad answer</span>
+
+<span class="c"># Custom timeout (default 120s)</span>
+solver = <span class="n">CaptchaSolver</span>(<span class="s">"KEY"</span>, timeout=<span class="v">180</span>, poll_interval=<span class="v">3</span>)</pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+
+      <div class="callout good">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body"><p>The Python client is also compatible with the <strong>real 2captcha.com</strong> — just change <code>api_url="https://2captcha.com"</code>. Same code, different server.</p></div>
+      </div>
+    </section>
+
+    <!-- ── Real World ────────────────────────────────────────────────────── -->
+    <section class="doc-section" id="real-world">
+      <h2><span class="sec-num">12</span> Real-World Example — Full Login Automation</h2>
+      <p>A complete script that logs into a site with reCAPTCHA using only <code>requests</code> (no browser needed).</p>
+
+      <div class="code-wrap">
+        <pre><span class="k">import</span> requests
+<span class="k">from</span> bs4 <span class="k">import</span> BeautifulSoup
+<span class="k">from</span> captchasolve <span class="k">import</span> CaptchaSolver
+
+solver  = <span class="n">CaptchaSolver</span>(<span class="s">"YOUR_API_KEY"</span>)
+session = requests.<span class="n">Session</span>()
+session.headers[<span class="s">"User-Agent"</span>] = <span class="s">"Mozilla/5.0 (Windows NT 10.0; Win64; x64)"</span>
+
+LOGIN_URL = <span class="s">"https://example.com/login"</span>
+
+<span class="c"># Step 1: Load the login page (grab CSRF token if any)</span>
+page = session.<span class="n">get</span>(LOGIN_URL)
+soup = <span class="n">BeautifulSoup</span>(page.text, <span class="s">"html.parser"</span>)
+csrf = soup.<span class="n">find</span>(<span class="s">"input"</span>, {<span class="s">"name"</span>: <span class="s">"_token"</span>})
+site_key = soup.<span class="n">find</span>(<span class="s">"div"</span>, class_=<span class="s">"g-recaptcha"</span>)[<span class="s">"data-sitekey"</span>]
+
+<span class="c"># Step 2: Solve the reCAPTCHA (worker does this)</span>
+<span class="b">print</span>(<span class="s">"Solving reCAPTCHA..."</span>)
+token = solver.<span class="n">recaptcha</span>(site_key, LOGIN_URL)
+<span class="b">print</span>(<span class="s">f"Got token: {token[:30]}..."</span>)
+
+<span class="c"># Step 3: Submit login form with the token</span>
+resp = session.<span class="n">post</span>(LOGIN_URL, data={
+    <span class="s">"username"</span>:             <span class="s">"my_user"</span>,
+    <span class="s">"password"</span>:             <span class="s">"my_password"</span>,
+    <span class="s">"g-recaptcha-response"</span>:  token,
+    <span class="s">"_token"</span>:               csrf[<span class="s">"value"</span>] <span class="k">if</span> csrf <span class="k">else</span> <span class="s">""</span>,
+})
+
+<span class="k">if</span> <span class="s">"dashboard"</span> <span class="k">in</span> resp.url <span class="k">or</span> resp.status_code == <span class="v">200</span>:
+    <span class="b">print</span>(<span class="s">"✅ Logged in successfully!"</span>)
+<span class="k">else</span>:
+    <span class="b">print</span>(<span class="s">f"❌ Login failed: {resp.status_code}"</span>)</pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+    </section>
+
+    <!-- ── Admin Panel ───────────────────────────────────────────────────── -->
+    <section class="doc-section" id="admin-panel">
+      <h2><span class="sec-num">13</span> Admin Panel</h2>
+      <p>The admin panel at <a href="/admin">/admin</a> lets you manage everything without touching the database.</p>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Feature</th><th>Where</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td>Live stats</td><td>Top row</td><td>Pending / Assigned / Solved / Failed tasks + online workers — updates every 5s</td></tr>
+            <tr><td>API Keys</td><td>Keys section</td><td>Create new keys, set label, adjust balance, copy key, delete</td></tr>
+            <tr><td>Workers</td><td>Workers section</td><td>See all registered workers, their solve count, and earned balance</td></tr>
+            <tr><td>Recent tasks</td><td>Tasks section</td><td>Last 60 tasks with type, status, client, worker, timestamps</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Creating an API key for a new user</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>Open Admin → API Keys section</strong>
+            <p>Type a label (e.g. "Client A") and set a starting balance (e.g. 10.00).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Click "+ Create Key"</strong>
+            <p>The new key appears in the table. Click "copy" to copy it to clipboard.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>Share the key + server URL with the client</strong>
+            <p>They plug it into <code>CaptchaSolver("THE_KEY", api_url="http://your-server.com")</code> and they're ready.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── FAQ ───────────────────────────────────────────────────────────── -->
+    <section class="doc-section" id="faq">
+      <h2><span class="sec-num">14</span> FAQ</h2>
+
+      <details>
+        <summary>Does 2captcha use AI or always human workers?</summary>
+        <div class="faq-body">
+          <p><strong>Always human workers.</strong> 2captcha is a crowdsourcing platform — real people worldwide log in, see CAPTCHAs in their browser, and solve them manually. There is no AI or automated system doing the solving. This is actually the reason services like 2captcha work: Google, hCaptcha, and Cloudflare are specifically trying to block bots and automated solvers, but they can't distinguish a human worker from a real user. The same applies to our system.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Does 2captcha use voice/audio solving?</summary>
+        <div class="faq-body">
+          <p>Yes — and it's still humans. 2captcha workers can solve audio CAPTCHAs by listening to the audio challenge and typing what they hear. There is no automated speech-to-text involved on 2captcha's side. Some third-party tools try to use speech recognition APIs to solve audio CAPTCHAs automatically, but the audio is specifically distorted to defeat those tools — which is why human ears still work better.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>What happens if a worker gives a wrong answer?</summary>
+        <div class="faq-body">
+          <p>The client can call <code>GET /res.php?action=reportbad&id=TASK_ID</code> to report a bad answer. The server will refund the client's balance by <code>$0.002</code>. In a production system you'd also want to track worker error rates and penalize/ban workers with too many bad reports. The current system doesn't do this automatically — you'd add that logic in <code>routes/worker.js</code>.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>How do I expose this to the internet (not just localhost)?</summary>
+        <div class="faq-body">
+          <p>For production, put nginx in front of the Node.js server:</p>
+          <pre style="margin-top:.5rem"><span class="c">server {
+    listen 443 ssl;
+    server_name your-domain.com;
+    location / { proxy_pass http://localhost:3000; }
+    location /socket.io/ {
+        proxy_pass         http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade $http_upgrade;
+        proxy_set_header   Connection "upgrade";
+    }
+}</span></pre>
+          <p style="margin-top:.5rem">Use <strong>Let's Encrypt</strong> (free) for SSL. Workers need a stable internet connection to your server to receive tasks via WebSocket.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Can I use this as a drop-in replacement for 2captcha in existing code?</summary>
+        <div class="faq-body">
+          <p>Yes — the API is fully 2captcha-compatible. Any library that supports 2captcha will work. For example, with the official Python 2captcha library:</p>
+          <pre style="margin-top:.5rem"><span class="k">from</span> twocaptcha <span class="k">import</span> TwoCaptcha
+solver = <span class="n">TwoCaptcha</span>(<span class="s">'YOUR_KEY'</span>, defaultTimeout=<span class="v">120</span>,
+                    server=<span class="s">'http://localhost:3000'</span>)
+result = solver.<span class="n">recaptcha</span>(sitekey=<span class="s">'...'</span>, url=<span class="s">'...'</span>)</pre>
+        </div>
+      </details>
+
+      <details>
+        <summary>What's the database file and can I reset it?</summary>
+        <div class="faq-body">
+          <p>The database is <code>D:\captcha-solver\captcha.db</code> — a single SQLite file. To reset everything (clear all tasks, workers, API keys), simply delete <code>captcha.db</code> and restart the server. It will recreate the schema and generate a new demo API key on startup.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>How do I change how much workers earn per solve?</summary>
+        <div class="faq-body">
+          <p>Open <code>D:\captcha-solver\index.js</code> and find these two lines:</p>
+          <pre style="margin-top:.5rem"><span class="c">// Credit worker $0.001 per solve</span>
+<span class="s">'UPDATE workers SET balance = balance + 0.001 ...'</span>
+<span class="c">// Charge client $0.002 per solve</span>
+<span class="s">'UPDATE api_keys SET balance = balance - 0.002 ...'</span></pre>
+          <p style="margin-top:.5rem">Change the values to whatever you want. Restart the server for changes to take effect.</p>
+        </div>
+      </details>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ── Scroll progress bar ───────────────────────────────────────────────────────
+const prog = document.getElementById('progress');
+window.addEventListener('scroll', () => {
+  const pct = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100;
+  prog.style.width = Math.min(pct, 100) + '%';
+});
+
+// ── Active sidebar link ───────────────────────────────────────────────────────
+const sections = document.querySelectorAll('section.doc-section');
+const links    = document.querySelectorAll('.sidebar a');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const link = document.querySelector(`.sidebar a[href="#${e.target.id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => obs.observe(s));
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function switchTab(btn, panelId) {
+  const wrap = btn.closest('.tabs-wrap');
+  wrap.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  wrap.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+// ── Copy code ─────────────────────────────────────────────────────────────────
+function copyCode(btn) {
+  const pre  = btn.parentElement.querySelector('pre') || btn.closest('.tab-panel')?.querySelector('pre');
+  if (!pre) return;
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1800);
+  });
+}
+
+// ── Theme toggle ──────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  document.documentElement.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+  localStorage.setItem('theme', document.documentElement.getAttribute('data-theme'));
+}
+const saved = localStorage.getItem('theme');
+if (saved) document.documentElement.setAttribute('data-theme', saved);
+</script>
+</body>
+</html>

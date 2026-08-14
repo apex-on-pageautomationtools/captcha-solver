@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — CaptchaSolve</title>
+<style>
+:root{--bg:#0f172a;--surface:#1e293b;--surface2:#253047;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--accent:#38bdf8;--green:#4ade80;--orange:#fb923c;--red:#f87171;--yellow:#facc15;--purple:#a78bfa}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:.875rem 1.5rem;display:flex;align-items:center;gap:1rem}
+header h1{font-size:1.2rem;font-weight:700;color:var(--accent)}
+nav{display:flex;gap:.5rem;margin-left:auto}
+nav a{color:var(--muted);text-decoration:none;padding:.35rem .7rem;border-radius:6px;font-size:.82rem;border:1px solid var(--border)}
+nav a:hover{color:var(--text);border-color:var(--accent)}
+#live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+.page{max-width:1100px;margin:0 auto;padding:1.5rem}
+/* ── Stat cards ── */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.875rem;margin-bottom:1.5rem}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center}
+.stat .val{font-size:1.8rem;font-weight:800}
+.stat .lbl{font-size:.75rem;color:var(--muted);margin-top:.2rem}
+.stat.blue .val{color:var(--accent)}
+.stat.green .val{color:var(--green)}
+.stat.orange .val{color:var(--orange)}
+.stat.red .val{color:var(--red)}
+.stat.purple .val{color:var(--purple)}
+.stat.yellow .val{color:var(--yellow)}
+/* ── Sections ── */
+section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.25rem;overflow:hidden}
+.section-head{display:flex;align-items:center;gap:.5rem;margin-bottom:1rem}
+.section-head h2{font-size:1rem;font-weight:700;flex:1}
+/* ── Table ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.83rem}
+th{text-align:left;color:var(--muted);padding:.5rem .75rem;border-bottom:1px solid var(--border);font-size:.78rem;white-space:nowrap}
+td{padding:.5rem .75rem;border-bottom:1px solid #1e293b;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.mono{font-family:monospace;font-size:.78rem;color:var(--accent)}
+.badge{display:inline-block;padding:.15rem .45rem;border-radius:4px;font-size:.72rem;font-weight:700}
+.badge.pending{background:#1a3050;color:var(--accent)}
+.badge.assigned{background:#2a1f00;color:var(--yellow)}
+.badge.done{background:#1a3a1a;color:var(--green)}
+.badge.failed,.badge.reported{background:#3a1a1a;color:var(--red)}
+/* ── Forms ── */
+.inline-form{display:flex;gap:.5rem;flex-wrap:wrap}
+.inline-form input{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:.45rem .7rem;color:var(--text);font-size:.85rem;outline:none;transition:.15s}
+.inline-form input:focus{border-color:var(--accent)}
+.btn{padding:.45rem .9rem;border:none;border-radius:7px;font-size:.82rem;font-weight:700;cursor:pointer;transition:.15s}
+.btn-primary{background:var(--accent);color:#0f172a}
+.btn-primary:hover{opacity:.85}
+.btn-danger{background:none;border:1px solid var(--red);color:var(--red);padding:.3rem .6rem;font-size:.78rem;border-radius:5px;cursor:pointer}
+.btn-danger:hover{background:var(--red);color:#0f172a}
+.btn-sm{padding:.3rem .6rem;font-size:.78rem;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:5px;cursor:pointer}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+/* ── Copy button ── */
+.copy-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:.2rem .5rem;border-radius:4px;cursor:pointer;font-size:.72rem}
+.copy-btn:hover{color:var(--green);border-color:var(--green)}
+/* ── Toast ── */
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--green);color:#0f172a;padding:.6rem 1rem;border-radius:8px;font-size:.85rem;font-weight:700;transform:translateY(100px);opacity:0;transition:.3s;z-index:999}
+#toast.show{transform:translateY(0);opacity:1}
+.refresh-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:.3rem .6rem;border-radius:6px;cursor:pointer;font-size:.78rem}
+.refresh-btn:hover{color:var(--text);border-color:var(--accent)}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚙️ Admin Panel</h1>
+  <div id="live-dot"></div>
+  <span style="font-size:.8rem;color:var(--green)" id="online-count">0 workers online</span>
+  <nav>
+    <a href="/">API Docs</a>
+    <a href="/guide">Guide</a>
+    <a href="/worker">Worker Dashboard</a>
+  </nav>
+</header>
+
+<div class="page">
+
+  <!-- Stats -->
+  <div class="stats-row" id="stats-row">
+    <div class="stat blue"><div class="val" id="s-pending">—</div><div class="lbl">Pending</div></div>
+    <div class="stat yellow"><div class="val" id="s-assigned">—</div><div class="lbl">Assigned</div></div>
+    <div class="stat green"><div class="val" id="s-done">—</div><div class="lbl">Solved</div></div>
+    <div class="stat red"><div class="val" id="s-failed">—</div><div class="lbl">Failed</div></div>
+    <div class="stat purple"><div class="val" id="s-workers">—</div><div class="lbl">Workers</div></div>
+    <div class="stat orange"><div class="val" id="s-keys">—</div><div class="lbl">API Keys</div></div>
+  </div>
+
+  <!-- API Keys -->
+  <section>
+    <div class="section-head">
+      <h2>🔑 API Keys</h2>
+      <button class="refresh-btn" onclick="loadKeys()">↻ Refresh</button>
+    </div>
+    <div class="inline-form" style="margin-bottom:1rem">
+      <input id="new-label" type="text" placeholder="Label (e.g. My App)" style="width:180px">
+      <input id="new-balance" type="number" placeholder="Balance ($)" value="10" style="width:110px">
+      <button class="btn btn-primary" onclick="createKey()">+ Create Key</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Key</th><th>Label</th><th>Balance</th><th>Created</th><th>Actions</th></tr></thead>
+        <tbody id="keys-body"><tr><td colspan="5" style="color:var(--muted);text-align:center;padding:1.5rem">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Workers -->
+  <section>
+    <div class="section-head">
+      <h2>👷 Workers</h2>
+      <button class="refresh-btn" onclick="loadWorkers()">↻ Refresh</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Username</th><th>Solved</th><th>Balance Earned</th><th>Joined</th></tr></thead>
+        <tbody id="workers-body"><tr><td colspan="5" style="color:var(--muted);text-align:center;padding:1.5rem">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Recent Tasks -->
+  <section>
+    <div class="section-head">
+      <h2>📋 Recent Tasks</h2>
+      <button class="refresh-btn" onclick="loadTasks()">↻ Refresh</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Type</th><th>Status</th><th>Client</th><th>Worker</th><th>Created</th><th>Solved</th></tr></thead>
+        <tbody id="tasks-body"><tr><td colspan="7" style="color:var(--muted);text-align:center;padding:1.5rem">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<div id="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+socket.on('connect',      () => socket.emit('admin:join'));
+socket.on('stats', applyStats);
+
+function applyStats(s) {
+  document.getElementById('s-pending').textContent  = s.pending;
+  document.getElementById('s-assigned').textContent = s.assigned;
+  document.getElementById('s-done').textContent     = s.done;
+  document.getElementById('s-failed').textContent   = s.failed;
+  document.getElementById('online-count').textContent = s.online + ' worker' + (s.online !== 1 ? 's' : '') + ' online';
+}
+
+async function loadStats() {
+  const r = await fetch('/worker-api/admin/stats');
+  const s = await r.json();
+  document.getElementById('s-pending').textContent  = s.tasks.pending;
+  document.getElementById('s-assigned').textContent = s.tasks.assigned;
+  document.getElementById('s-done').textContent     = s.tasks.done;
+  document.getElementById('s-failed').textContent   = s.tasks.failed;
+  document.getElementById('s-workers').textContent  = s.workers;
+  document.getElementById('s-keys').textContent     = s.api_keys;
+}
+
+// ── API Keys ──────────────────────────────────────────────────────────────────
+async function loadKeys() {
+  const keys = await (await fetch('/worker-api/admin/keys')).json();
+  const body = document.getElementById('keys-body');
+  if (!keys.length) { body.innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:1rem">No keys yet</td></tr>'; return; }
+  body.innerHTML = keys.map(k => `
+    <tr>
+      <td><span class="mono">${k.key}</span> <button class="copy-btn" onclick="copyText('${k.key}')">copy</button></td>
+      <td>${esc(k.label)}</td>
+      <td>
+        <input type="number" value="${parseFloat(k.balance).toFixed(2)}" step="0.01" style="width:90px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:.25rem .4rem;border-radius:4px;font-size:.82rem" id="bal-${k.id}">
+        <button class="btn-sm" onclick="updateBalance(${k.id})">Save</button>
+      </td>
+      <td style="color:var(--muted);font-size:.78rem">${fmtDate(k.created_at)}</td>
+      <td><button class="btn-danger" onclick="deleteKey(${k.id})">Delete</button></td>
+    </tr>
+  `).join('');
+}
+
+async function createKey() {
+  const label   = document.getElementById('new-label').value.trim() || 'New Key';
+  const balance = parseFloat(document.getElementById('new-balance').value) || 10;
+  const r = await (await fetch('/worker-api/admin/keys', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ label, balance })
+  })).json();
+  toast('Key created: ' + r.key);
+  document.getElementById('new-label').value = '';
+  loadKeys(); loadStats();
+}
+
+async function updateBalance(id) {
+  const balance = parseFloat(document.getElementById('bal-' + id).value);
+  await fetch('/worker-api/admin/keys/' + id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ balance })
+  });
+  toast('Balance updated');
+}
+
+async function deleteKey(id) {
+  if (!confirm('Delete this API key?')) return;
+  await fetch('/worker-api/admin/keys/' + id, { method: 'DELETE' });
+  loadKeys(); loadStats();
+}
+
+// ── Workers ───────────────────────────────────────────────────────────────────
+async function loadWorkers() {
+  const workers = await (await fetch('/worker-api/admin/workers')).json();
+  const body = document.getElementById('workers-body');
+  if (!workers.length) { body.innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:1rem">No workers yet — share the <a href="/worker" style="color:var(--accent)">/worker</a> link</td></tr>'; return; }
+  body.innerHTML = workers.map((w, i) => `
+    <tr>
+      <td style="color:var(--muted)">${i + 1}</td>
+      <td><strong>${esc(w.username)}</strong></td>
+      <td style="color:var(--green)">${w.solved_count}</td>
+      <td style="color:var(--orange)">$${parseFloat(w.balance).toFixed(4)}</td>
+      <td style="color:var(--muted);font-size:.78rem">${fmtDate(w.created_at)}</td>
+    </tr>
+  `).join('');
+}
+
+// ── Tasks ─────────────────────────────────────────────────────────────────────
+async function loadTasks() {
+  const tasks = await (await fetch('/worker-api/admin/tasks')).json();
+  const body  = document.getElementById('tasks-body');
+  if (!tasks.length) { body.innerHTML = '<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:1rem">No tasks yet</td></tr>'; return; }
+  body.innerHTML = tasks.map(t => `
+    <tr>
+      <td class="mono">${t.id.substring(0,12)}…</td>
+      <td><span class="badge ${t.type === 'image' ? 'pending' : 'done'}">${esc(t.type)}</span></td>
+      <td><span class="badge ${t.status}">${t.status}</span></td>
+      <td style="color:var(--muted);font-size:.78rem">${esc(t.client || '—')}</td>
+      <td style="color:var(--muted);font-size:.78rem">${esc(t.worker || '—')}</td>
+      <td style="color:var(--muted);font-size:.78rem">${fmtDate(t.created_at)}</td>
+      <td style="color:var(--muted);font-size:.78rem">${t.solved_at ? fmtDate(t.solved_at) : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d + (d.includes('Z') ? '' : 'Z')).toLocaleString();
+}
+function copyText(t) {
+  navigator.clipboard.writeText(t).then(() => toast('Copied!'));
+}
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadStats();
+loadKeys();
+loadWorkers();
+loadTasks();
+setInterval(() => { loadStats(); loadTasks(); }, 5000);  // auto-refresh every 5s
+</script>
+</body>
+</html>

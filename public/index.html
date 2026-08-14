@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CaptchaSolve — API Docs</title>
+<style>
+  :root{--bg:#0f172a;--surface:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--accent:#38bdf8;--green:#4ade80;--orange:#fb923c;--red:#f87171;--code-bg:#0d1117}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.6;min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;gap:1rem}
+  header h1{font-size:1.4rem;font-weight:700;color:var(--accent)}
+  header span{color:var(--muted);font-size:.9rem}
+  nav{display:flex;gap:.5rem;margin-left:auto}
+  nav a{color:var(--muted);text-decoration:none;padding:.4rem .8rem;border-radius:6px;font-size:.875rem;border:1px solid var(--border);transition:.15s}
+  nav a:hover{color:var(--text);border-color:var(--accent)}
+  .page{max-width:860px;margin:0 auto;padding:2rem 1.5rem}
+  .hero{text-align:center;padding:3rem 0 2rem}
+  .hero h2{font-size:2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+  .hero p{color:var(--muted);font-size:1.05rem}
+  .badges{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:1rem}
+  .badge{background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:.25rem .75rem;font-size:.78rem;color:var(--muted)}
+  .badge.green{border-color:var(--green);color:var(--green)}
+  section{margin-top:2.5rem}
+  section h3{font-size:1.1rem;font-weight:700;color:var(--accent);margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+  .endpoint{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:1rem;overflow:hidden}
+  .endpoint-head{display:flex;align-items:center;gap.75rem;padding:.75rem 1rem;gap:.6rem}
+  .method{font-size:.8rem;font-weight:700;padding:.2rem .5rem;border-radius:4px;background:#1e3a5f;color:var(--accent)}
+  .method.get{background:#1a3a2a;color:var(--green)}
+  .url{font-family:monospace;font-size:.9rem;color:var(--text)}
+  .endpoint-body{padding:.75rem 1rem;border-top:1px solid var(--border)}
+  .endpoint-body p{color:var(--muted);font-size:.9rem;margin-bottom:.75rem}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:7px;padding:1rem;overflow-x:auto;font-size:.82rem;line-height:1.7}
+  code{font-family:'Cascadia Code','Fira Code',monospace}
+  .k{color:#ff7b72}.s{color:#a5d6ff}.c{color:#8b949e}.n{color:#ffa657}.v{color:#79c0ff}
+  .params{width:100%;border-collapse:collapse;font-size:.875rem;margin-top:.5rem}
+  .params th{text-align:left;color:var(--muted);padding:.4rem .6rem;border-bottom:1px solid var(--border);font-weight:600;font-size:.8rem}
+  .params td{padding:.45rem .6rem;border-bottom:1px solid #1e293b;vertical-align:top}
+  .params td:first-child{font-family:monospace;color:var(--accent);font-size:.82rem}
+  .params td:last-child{color:var(--muted)}
+  .req{color:var(--orange);font-size:.7rem;font-weight:700;border:1px solid var(--orange);border-radius:3px;padding:1px 4px}
+  .opt{color:var(--muted);font-size:.7rem;border:1px solid var(--border);border-radius:3px;padding:1px 4px}
+  .flow{display:flex;flex-direction:column;gap:.5rem;margin-top:1rem}
+  .step{display:flex;gap:.75rem;align-items:flex-start}
+  .step-num{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#0f172a;font-size:.75rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .step p{color:var(--muted);font-size:.9rem;padding-top:.15rem}
+  .types{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.75rem;margin-top:.75rem}
+  .type-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem;text-align:center}
+  .type-card .icon{font-size:1.5rem;margin-bottom:.3rem}
+  .type-card .name{font-size:.85rem;font-weight:600}
+  .type-card .sub{font-size:.75rem;color:var(--muted)}
+  footer{text-align:center;padding:2rem;color:var(--muted);font-size:.85rem;border-top:1px solid var(--border);margin-top:3rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚡ CaptchaSolve</h1>
+  <span>Self-hosted · 2captcha-compatible API</span>
+  <nav>
+    <a href="/guide">Guide</a>
+    <a href="/worker">Worker Dashboard</a>
+    <a href="/admin">Admin Panel</a>
+  </nav>
+</header>
+
+<div class="page">
+  <div class="hero">
+    <h2>Your Own CAPTCHA Solving Service</h2>
+    <p>2captcha-compatible API · Human-powered · Fully self-hosted · 100% free stack</p>
+    <div class="badges">
+      <span class="badge green">✓ Node.js</span>
+      <span class="badge green">✓ SQLite</span>
+      <span class="badge green">✓ Socket.io</span>
+      <span class="badge">No paid services</span>
+      <span class="badge">2captcha-compatible</span>
+    </div>
+  </div>
+
+  <section>
+    <h3>How It Works</h3>
+    <div class="flow">
+      <div class="step"><div class="step-num">1</div><p><strong>Submit</strong> — Your client POSTs the CAPTCHA (image or reCAPTCHA params) to <code>/in.php</code>, receives a task ID.</p></div>
+      <div class="step"><div class="step-num">2</div><p><strong>Queue</strong> — Task stored in SQLite, pushed to online human workers via WebSocket in real time.</p></div>
+      <div class="step"><div class="step-num">3</div><p><strong>Solve</strong> — A worker sees the challenge in their browser dashboard, solves it and submits the answer.</p></div>
+      <div class="step"><div class="step-num">4</div><p><strong>Poll</strong> — Your client polls <code>GET /res.php?id=TASK_ID</code> every 5s until <code>OK|TOKEN</code> is returned.</p></div>
+      <div class="step"><div class="step-num">5</div><p><strong>Use</strong> — Inject the token into the form and submit. If wrong, report it for a refund.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h3>Supported CAPTCHA Types</h3>
+    <div class="types">
+      <div class="type-card"><div class="icon">🖼️</div><div class="name">Image</div><div class="sub">base64 · method=base64</div></div>
+      <div class="type-card"><div class="icon">🔄</div><div class="name">reCAPTCHA v2</div><div class="sub">method=userrecaptcha</div></div>
+      <div class="type-card"><div class="icon">🔐</div><div class="name">hCaptcha</div><div class="sub">method=hcaptcha</div></div>
+      <div class="type-card"><div class="icon">☁️</div><div class="name">Turnstile</div><div class="sub">method=turnstile</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h3>API Endpoints</h3>
+
+    <div class="endpoint">
+      <div class="endpoint-head">
+        <span class="method">POST</span>
+        <span class="url">/in.php</span>
+      </div>
+      <div class="endpoint-body">
+        <p>Submit a CAPTCHA task. Returns <code>OK|TASK_ID</code> on success.</p>
+        <table class="params">
+          <tr><th>Param</th><th>Tag</th><th>Description</th></tr>
+          <tr><td>key</td><td><span class="req">REQ</span></td><td>Your API key</td></tr>
+          <tr><td>method</td><td><span class="opt">OPT</span></td><td>base64 / userrecaptcha / hcaptcha / turnstile (default: base64)</td></tr>
+          <tr><td>body</td><td><span class="req">REQ*</span></td><td>Base64-encoded image (image CAPTCHA only)</td></tr>
+          <tr><td>googlekey</td><td><span class="req">REQ*</span></td><td>Site key (reCAPTCHA/hCaptcha/Turnstile)</td></tr>
+          <tr><td>pageurl</td><td><span class="req">REQ*</span></td><td>Page URL where the CAPTCHA is (token types)</td></tr>
+        </table>
+        <br>
+        <pre><code><span class="c"># Image CAPTCHA</span>
+<span class="k">curl</span> -X POST http://localhost:3000/in.php \
+  -d <span class="s">"key=YOUR_API_KEY&method=base64&body=BASE64_IMAGE"</span>
+<span class="c"># → OK|a3f9c2b1e4d8</span>
+
+<span class="c"># reCAPTCHA v2</span>
+<span class="k">curl</span> -X POST http://localhost:3000/in.php \
+  -d <span class="s">"key=YOUR_KEY&method=userrecaptcha&googlekey=SITE_KEY&pageurl=https://example.com"</span></code></pre>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-head">
+        <span class="method get">GET</span>
+        <span class="url">/res.php</span>
+      </div>
+      <div class="endpoint-body">
+        <p>Poll result, check balance, or report a bad answer.</p>
+        <table class="params">
+          <tr><th>Param</th><th>Tag</th><th>Description</th></tr>
+          <tr><td>key</td><td><span class="req">REQ</span></td><td>Your API key</td></tr>
+          <tr><td>action</td><td><span class="opt">OPT</span></td><td>get (default) / getbalance / reportbad</td></tr>
+          <tr><td>id</td><td><span class="req">REQ*</span></td><td>Task ID returned by /in.php</td></tr>
+        </table>
+        <br>
+        <pre><code><span class="c"># Poll (call every 5s)</span>
+<span class="k">curl</span> <span class="s">"http://localhost:3000/res.php?key=YOUR_KEY&action=get&id=a3f9c2b1e4d8"</span>
+<span class="c"># → CAPCHA_NOT_READY  (keep polling)</span>
+<span class="c"># → OK|03AGdBq25...   (done!)</span>
+
+<span class="c"># Check balance</span>
+<span class="k">curl</span> <span class="s">"http://localhost:3000/res.php?key=YOUR_KEY&action=getbalance"</span>
+<span class="c"># → 9.9860</span>
+
+<span class="c"># Report wrong answer (refund)</span>
+<span class="k">curl</span> <span class="s">"http://localhost:3000/res.php?key=YOUR_KEY&action=reportbad&id=a3f9c2b1e4d8"</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h3>Python / Node.js Client Example</h3>
+    <pre><code><span class="c"># Python example (drop-in 2captcha replacement)</span>
+<span class="k">import</span> requests, time
+
+API = <span class="s">"http://localhost:3000"</span>
+KEY = <span class="s">"YOUR_API_KEY"</span>
+
+<span class="k">def</span> <span class="n">solve_image</span>(base64_img):
+    r = requests.post(f<span class="s">"{API}/in.php"</span>, data={
+        <span class="s">"key"</span>: KEY, <span class="s">"method"</span>: <span class="s">"base64"</span>, <span class="s">"body"</span>: base64_img
+    })
+    task_id = r.text.split(<span class="s">"|"</span>)[<span class="v">1</span>]
+
+    <span class="k">for</span> _ <span class="k">in</span> range(<span class="v">24</span>):       <span class="c"># poll up to 2 min</span>
+        time.sleep(<span class="v">5</span>)
+        r = requests.get(f<span class="s">"{API}/res.php"</span>, params={
+            <span class="s">"key"</span>: KEY, <span class="s">"action"</span>: <span class="s">"get"</span>, <span class="s">"id"</span>: task_id
+        })
+        <span class="k">if</span> r.text.startswith(<span class="s">"OK"</span>):
+            <span class="k">return</span> r.text.split(<span class="s">"|"</span>)[<span class="v">1</span>]
+    <span class="k">raise</span> TimeoutError(<span class="s">"Not solved in time"</span>)</code></pre>
+  </section>
+
+  <section>
+    <h3>Error Codes</h3>
+    <table class="params">
+      <tr><th>Code</th><th>Meaning</th></tr>
+      <tr><td>ERROR_WRONG_USER_KEY</td><td>API key missing or invalid</td></tr>
+      <tr><td>ERROR_ZERO_BALANCE</td><td>Client balance is 0 or negative</td></tr>
+      <tr><td>ERROR_NO_SLOT_AVAILABLE</td><td>Required param missing in request</td></tr>
+      <tr><td>CAPCHA_NOT_READY</td><td>Still being solved — keep polling</td></tr>
+      <tr><td>ERROR_CAPTCHA_UNSOLVABLE</td><td>Worker marked as unsolvable or reported bad</td></tr>
+      <tr><td>ERROR_WRONG_ID_FORMAT</td><td>Task ID not found for this API key</td></tr>
+    </table>
+  </section>
+</div>
+
+<footer>CaptchaSolve — Open Source · Built with Node.js + SQLite + Socket.io</footer>
+</body>
+</html>
