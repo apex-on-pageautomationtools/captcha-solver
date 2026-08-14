@@ -4,7 +4,9 @@ const crypto = require('crypto');
 const path   = require('path');
 
 // Use /data on Railway (persistent volume) or local dir otherwise
+const fs    = require('fs');
 const dbDir = process.env.DATA_DIR || __dirname;
+fs.mkdirSync(dbDir, { recursive: true }); // create /data if it doesn't exist yet
 const db    = new DatabaseSync(path.join(dbDir, 'captcha.db'));
 
 db.exec('PRAGMA journal_mode = WAL');
