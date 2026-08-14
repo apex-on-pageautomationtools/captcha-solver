@@ -3,10 +3,33 @@ const { DatabaseSync } = require('node:sqlite');
 const crypto = require('crypto');
 const path   = require('path');
 
-// Use /data on Railway (persistent volume) or local dir otherwise
-const fs    = require('fs');
-const dbDir = process.env.DATA_DIR || __dirname;
-fs.mkdirSync(dbDir, { recursive: true }); // create /data if it doesn't exist yet
+// Find a writable directory — try /data (Railway volume), then /tmp, then app dir
+const fs = require('fs');
+const os = require('os');
+
+function findWritableDir() {
+  const candidates = [
+    process.env.DATA_DIR,   // set via Railway env var
+    '/data',                // Railway persistent volume default
+    os.tmpdir(),            // always writable (not persistent but never crashes)
+    __dirname,              // local dev fallback
+  ].filter(Boolean);
+
+  for (const dir of candidates) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      // verify it's actually writable
+      const testFile = path.join(dir, '.write_test');
+      fs.writeFileSync(testFile, '1');
+      fs.unlinkSync(testFile);
+      console.log(`✅  Database directory: ${dir}`);
+      return dir;
+    } catch (_) { /* try next */ }
+  }
+  throw new Error('No writable directory found for SQLite database');
+}
+
+const dbDir = findWritableDir();
 const db    = new DatabaseSync(path.join(dbDir, 'captcha.db'));
 
 db.exec('PRAGMA journal_mode = WAL');
